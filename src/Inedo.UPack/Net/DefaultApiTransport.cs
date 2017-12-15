@@ -8,9 +8,27 @@ using System.Threading.Tasks;
 
 namespace Inedo.UPack.Net
 {
-    internal class DefaultApiTransport : ApiTransport
+    /// <summary>
+    /// Default implementation of <see cref="ApiTransport"/> which uses <see cref="HttpWebRequest"/> to
+    /// communicate with a remote feed.
+    /// </summary>
+    public class DefaultApiTransport : ApiTransport
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DefaultApiTransport"/> class.
+        /// </summary>
+        public DefaultApiTransport()
+        {
+        }
+
+        /// <summary>
+        /// Gets or sets the User Agent string to use when making requests.
+        /// </summary>
+        public string UserAgent { get; set; }
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public override async Task<ApiResponse> GetResponseAsync(ApiRequest request, CancellationToken cancellationToken)
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -18,6 +36,8 @@ namespace Inedo.UPack.Net
             var webRequest = BuildWebRequest(request);
             webRequest.Method = request.Method;
             webRequest.ContentType = request.ContentType;
+            if (!string.IsNullOrEmpty(this.UserAgent))
+                webRequest.UserAgent = this.UserAgent;
 
             if (request.RequestBody != null)
             {
@@ -31,8 +51,17 @@ namespace Inedo.UPack.Net
             return new DefaultApiResponse(webResponse);
         }
 
+        /// <summary>
+        /// Returns a <see cref="HttpWebRequest"/> to use based on the specified <see cref="ApiRequest"/>.
+        /// </summary>
+        /// <param name="r">The desired request.</param>
+        /// <returns>Valid <see cref="HttpWebRequest"/> object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="r"/> is null.</exception>
         protected static HttpWebRequest BuildWebRequest(ApiRequest r)
         {
+            if (r == null)
+                throw new ArgumentNullException(nameof(r));
+
             var url = r.Endpoint.Uri.ToString();
             if (!url.EndsWith("/"))
                 url += "/";
@@ -46,8 +75,20 @@ namespace Inedo.UPack.Net
 
             return request;
         }
+        /// <summary>
+        /// Returns a standard Base64-encoded HTTP basic authentication token containing the specified user name and password.
+        /// </summary>
+        /// <param name="userName">The user name.</param>
+        /// <param name="password">The password.</param>
+        /// <returns>Base64-encoded HTTP basic authentication token.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="userName"/> is null or empty or <paramref name="password"/> is null.</exception>
         protected static string GetBasicAuthToken(string userName, SecureString password)
         {
+            if (string.IsNullOrEmpty(userName))
+                throw new ArgumentNullException(nameof(userName));
+            if (password == null)
+                throw new ArgumentNullException(nameof(password));
+
             var utf8 = new UTF8Encoding(false);
             unsafe
             {
