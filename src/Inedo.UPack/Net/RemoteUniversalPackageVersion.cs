@@ -30,6 +30,10 @@ namespace Inedo.UPack.Net
             this.Size = (long)obj["size"];
             this.PublishedDate = (DateTimeOffset)obj["published"];
             this.Downloads = (int?)obj["downloads"] ?? 0;
+            var sha1String = (string)obj["sha1"];
+            if (!string.IsNullOrEmpty(sha1String))
+                this.SHA1 = HexString.Parse(sha1String);
+
             this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>)obj.ToObject(typeof(Dictionary<string, object>)));
         }
 
@@ -73,6 +77,10 @@ namespace Inedo.UPack.Net
         /// Gets the number of downloads of this version of the package.
         /// </summary>
         public int Downloads { get; }
+        /// <summary>
+        /// Gets the SHA1 hash of the package.
+        /// </summary>
+        public HexString SHA1 { get; }
         /// <summary>
         /// Gets all of the raw metadata for the package.
         /// </summary>

@@ -98,6 +98,51 @@ namespace Inedo.UPack.Net
         }
 
         /// <summary>
+        /// Returns a list of packages that contain the specified search term.
+        /// </summary>
+        /// <param name="searchTerm">Text to search package metadata for.</param>
+        /// <returns>List of packages that match the specified search term.</returns>
+        public Task<IReadOnlyList<RemoteUniversalPackage>> SearchPackagesAsync(string searchTerm) => this.SearchPackagesAsync(searchTerm, default);
+        /// <summary>
+        /// Returns a list of packages that contain the specified search term.
+        /// </summary>
+        /// <param name="searchTerm">Text to search package metadata for.</param>
+        /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
+        /// <returns>List of packages that match the specified search term.</returns>
+        public async Task<IReadOnlyList<RemoteUniversalPackage>> SearchPackagesAsync(string searchTerm, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+                return await this.ListPackagesAsync(null, null, cancellationToken).ConfigureAwait(false);
+
+            var url = FormatUrl("search", ("term", searchTerm));
+
+            var request = new ApiRequest(this.Endpoint, url);
+            using (var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false))
+            {
+                if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
+                    throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
+
+                using (var responseStream = response.GetResponseStream())
+                using (var reader = new StreamReader(responseStream, Encoding.UTF8))
+                using (var jsonReader = new JsonTextReader(reader))
+                {
+                    var arr = await JArray.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
+                    var results = new List<RemoteUniversalPackage>(arr.Count);
+
+                    foreach (var token in arr)
+                    {
+                        if (!(token is JObject obj))
+                            throw new InvalidDataException("Unexpected token in JSON array.");
+
+                        results.Add(new RemoteUniversalPackage(obj));
+                    }
+
+                    return results.AsReadOnly();
+                }
+            }
+        }
+
+        /// <summary>
         /// Returns a list of all package versions with the specified package ID.
         /// </summary>
         /// <param name="id">Full name of the package.</param>
@@ -174,6 +219,18 @@ namespace Inedo.UPack.Net
         /// </summary>
         /// <param name="id">Full name of the package.</param>
         /// <param name="version">Version of the package. Specify null for the latest version.</param>
+        /// <returns>Stream containing the specified package if it is available; otherwise null.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="id"/> is null.</exception>
+        /// <remarks>
+        /// The stream returned by this method is not buffered at all. If random access is required, the caller must
+        /// first copy it to another stream.
+        /// </remarks>
+        public Task<Stream> GetPackageStreamAsync(UniversalPackageId id, UniversalPackageVersion version) => this.GetPackageStreamAsync(id, version, default);
+        /// <summary>
+        /// Returns a stream containing the specified package if it is available; otherwise null.
+        /// </summary>
+        /// <param name="id">Full name of the package.</param>
+        /// <param name="version">Version of the package. Specify null for the latest version.</param>
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <returns>Stream containing the specified package if it is available; otherwise null.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="id"/> is null.</exception>
@@ -206,6 +263,64 @@ namespace Inedo.UPack.Net
         }
 
         /// <summary>
+        /// Returns a stream containing the file at the specified path in the specified package if it is available; otherwise null.
+        /// </summary>
+        /// <param name="id">Full name of the package.</param>
+        /// <param name="version">Version of the package. Specify null for the latest version.</param>
+        /// <param name="filePath">Path of the file inside the package.</param>
+        /// <returns>Stream containing the specified package if it is available; otherwise null.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="id"/> is null.</exception>
+        /// <remarks>
+        /// The stream returned by this method is not buffered at all. If random access is required, the caller must
+        /// first copy it to another stream.
+        /// </remarks>
+        public Task<Stream> GetPackageFileStreamAsync(UniversalPackageId id, UniversalPackageVersion version, string filePath) => this.GetPackageFileStreamAsync(id, version, filePath, default);
+        /// <summary>
+        /// Returns a stream containing the file at the specified path in the specified package if it is available; otherwise null.
+        /// </summary>
+        /// <param name="id">Full name of the package.</param>
+        /// <param name="version">Version of the package. Specify null for the latest version.</param>
+        /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
+        /// <param name="filePath">Path of the file inside the package.</param>
+        /// <returns>Stream containing the specified package if it is available; otherwise null.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="id"/> is null.</exception>
+        /// <remarks>
+        /// The stream returned by this method is not buffered at all. If random access is required, the caller must
+        /// first copy it to another stream.
+        /// </remarks>
+        public async Task<Stream> GetPackageFileStreamAsync(UniversalPackageId id, UniversalPackageVersion version, string filePath, CancellationToken cancellationToken)
+        {
+            if (id == null)
+                throw new ArgumentNullException(nameof(id));
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentNullException(nameof(filePath));
+
+            var url = "download-file/" + Uri.EscapeUriString(id.ToString());
+            if (version != null)
+                url += "/" + Uri.EscapeUriString(version.ToString()) + "?path=" + Uri.EscapeDataString(filePath);
+            else
+                url += "?latest&path=" + Uri.EscapeDataString(filePath);
+
+            var request = new ApiRequest(this.Endpoint, url);
+            var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                return response.GetResponseStream();
+            }
+            catch
+            {
+                response?.Dispose();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Uploads the package in the specified stream to the feed.
+        /// </summary>
+        /// <param name="stream">Stream containg a universal package.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
+        public Task UploadPackageAsync(Stream stream) => this.UploadPackageAsync(stream, default);
+        /// <summary>
         /// Uploads the package in the specified stream to the feed.
         /// </summary>
         /// <param name="stream">Stream containg a universal package.</param>
@@ -223,6 +338,13 @@ namespace Inedo.UPack.Net
             }
         }
 
+        /// <summary>
+        /// Deletes the specified package from the remote feed.
+        /// </summary>
+        /// <param name="id">Full name of the package.</param>
+        /// <param name="version">Version of the package.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="id"/> is null or <paramref name="version"/> is null.</exception>
+        public Task DeletePackageAsync(UniversalPackageId id, UniversalPackageVersion version) => this.DeletePackageAsync(id, version, default);
         /// <summary>
         /// Deletes the specified package from the remote feed.
         /// </summary>
