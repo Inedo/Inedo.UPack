@@ -37,7 +37,7 @@ namespace Inedo.UPack.Packaging
         public object this[string propertyName]
         {
             get => this.GetPropertyValue(propertyName);
-            set => this.SetPropertyValue(value, propertyName);
+            set => this.AddInternal(propertyName, value);
         }
 
         /// <summary>
@@ -133,9 +133,7 @@ namespace Inedo.UPack.Packaging
 
         internal void WriteJson(JsonTextWriter json) => new JsonSerializer().Serialize(json, this.properties);
 
-        private void AddInternal(string key, object value)
-        {
-        }
+        private void AddInternal(string key, object value) => this.properties[key] = value;
         private object GetPropertyValue([CallerMemberName] string propertyName = null) => this.properties.TryGetValue(propertyName.ToLowerInvariant(), out var value) ? value : null;
         private void SetPropertyValue(object value, [CallerMemberName] string propertyName = null)
         {
