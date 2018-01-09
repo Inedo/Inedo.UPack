@@ -36,7 +36,7 @@ namespace Inedo.UPack.Packaging
         /// <returns>Value of the property if defined; otherwise null.</returns>
         public object this[string propertyName]
         {
-            get => this.GetPropertyValue(propertyName);
+            get => this.GetInternal(propertyName);
             set => this.AddInternal(propertyName, value);
         }
 
@@ -134,7 +134,8 @@ namespace Inedo.UPack.Packaging
         internal void WriteJson(JsonTextWriter json) => new JsonSerializer().Serialize(json, this.properties);
 
         private void AddInternal(string key, object value) => this.properties[key] = value;
-        private object GetPropertyValue([CallerMemberName] string propertyName = null) => this.properties.TryGetValue(propertyName.ToLowerInvariant(), out var value) ? value : null;
+        private object GetInternal(string propertyName) => this.properties.TryGetValue(propertyName, out var value) ? value : null;
+        private object GetPropertyValue([CallerMemberName] string propertyName = null) => this.GetInternal(propertyName.ToLowerInvariant());
         private void SetPropertyValue(object value, [CallerMemberName] string propertyName = null)
         {
             if (value != null)
