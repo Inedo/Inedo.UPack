@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -131,6 +133,85 @@ namespace Inedo.UPack.Packaging
         /// Completes the package file and releases resources.
         /// </summary>
         public void Dispose() => this.zip.Dispose();
+
+        /// <summary>
+        /// Adds the files and directories from the specified source path to the specified target path in the package.
+        /// </summary>
+        /// <param name="sourcePath">Full source path of files and directories to include. This must be an absolute path.</param>
+        /// <param name="targetPath">Target prefix path inside the package.</param>
+        /// <param name="recursive">When true, subdirectories will be recursively added to the package.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
+        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive) => this.AddContentsAsync(sourcePath, targetPath, recursive, null);
+        /// <summary>
+        /// Adds the files and directories from the specified source path to the specified target path in the package.
+        /// </summary>
+        /// <param name="sourcePath">Full source path of files and directories to include. This must be an absolute path.</param>
+        /// <param name="targetPath">Target prefix path inside the package.</param>
+        /// <param name="recursive">When true, subdirectories will be recursively added to the package.</param>
+        /// <param name="shouldInclude">Method invoked for each file to determine if it should be added to the package. The full source path is the argument supplied to the method.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
+        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude) => this.AddContentsAsync(sourcePath, targetPath, recursive, shouldInclude);
+        /// <summary>
+        /// Adds the files and directories from the specified source path to the specified target path in the package.
+        /// </summary>
+        /// <param name="sourcePath">Full source path of files and directories to include. This must be an absolute path.</param>
+        /// <param name="targetPath">Target prefix path inside the package.</param>
+        /// <param name="recursive">When true, subdirectories will be recursively added to the package.</param>
+        /// <param name="shouldInclude">Method invoked for each file to determine if it should be added to the package. The full source path is the argument supplied to the method.</param>
+        /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
+        public async Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(sourcePath))
+                throw new ArgumentNullException(nameof(sourcePath));
+            if (!Path.IsPathRooted(sourcePath))
+                throw new ArgumentException("Source path must be an absolute path.");
+
+            var root = targetPath?.Trim('/', '\\')?.Replace('\\', '/') ?? string.Empty;
+
+            // keep track of directories implicitly added
+            var addedDirs = new HashSet<string>();
+
+            // first add all of the files
+            foreach (var sourceFileName in Directory.EnumerateFiles(sourcePath, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly))
+            {
+                if (shouldInclude?.Invoke(sourceFileName) == false)
+                    continue;
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                using (var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
+                {
+                    var itemPath = getFullTargetPath(sourceFileName);
+                    var pathParts = itemPath.Split('/');
+                    for (int i = 1; i < pathParts.Length - 1; i++)
+                        addedDirs.Add(string.Join("/", pathParts.Take(i)));
+
+                    await this.AddFileAsync(sourceStream, itemPath, File.GetLastWriteTimeUtc(sourceFileName), cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            // don't ever add any subdirectories if not in recursive mode
+            if (recursive)
+            {
+                // now look for any empty directories
+                foreach (var sourceDirName in Directory.EnumerateDirectories(sourcePath, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly))
+                {
+                    var itemPath = getFullTargetPath(sourceDirName);
+                    if (addedDirs.Add(itemPath))
+                        this.AddEmptyDirectory(itemPath);
+                }
+            }
+
+            string getFullTargetPath(string fullSourcePath)
+            {
+                var path = fullSourcePath.Substring(sourcePath.Length).Trim('/', '\\').Replace('\\', '/');
+                return string.IsNullOrEmpty(targetPath) ? path : (root + "/" + path);
+            }
+        }
 
         private static Stream CreateFile(string fileName)
         {
