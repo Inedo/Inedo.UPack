@@ -71,7 +71,7 @@ namespace Inedo.UPack.Net
             if (r.Endpoint.UseDefaultCredentials)
                 request.UseDefaultCredentials = true;
             else if (!string.IsNullOrEmpty(r.Endpoint.UserName) && r.Endpoint.Password != null)
-                request.Headers.Add("Basic " + GetBasicAuthToken(r.Endpoint.UserName, r.Endpoint.Password));
+                request.Headers.Add(HttpRequestHeader.Authorization, "Basic " + GetBasicAuthToken(r.Endpoint.UserName, r.Endpoint.Password));
 
             return request;
         }
