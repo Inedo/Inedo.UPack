@@ -204,8 +204,8 @@ namespace Inedo.UPack.Packaging
                 else
                 {
                     var containingPath = Path.GetDirectoryName(destPath);
-                    if (!string.IsNullOrEmpty(destPath))
-                        Directory.CreateDirectory(destPath);
+                    if (!string.IsNullOrEmpty(containingPath))
+                        Directory.CreateDirectory(containingPath);
 
                     using (var entryStream = entry.Open())
                     using (var destStream = new FileStream(destPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
