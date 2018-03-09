@@ -152,7 +152,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="shouldInclude">Method invoked for each file to determine if it should be added to the package. The full source path is the argument supplied to the method.</param>
         /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
-        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude) => this.AddContentsAsync(sourcePath, targetPath, recursive, shouldInclude);
+        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude) => this.AddContentsAsync(sourcePath, targetPath, recursive, shouldInclude, new CancellationToken());
         /// <summary>
         /// Adds the files and directories from the specified source path to the specified target path in the package.
         /// </summary>
