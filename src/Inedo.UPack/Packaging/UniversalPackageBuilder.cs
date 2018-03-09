@@ -183,7 +183,7 @@ namespace Inedo.UPack.Packaging
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                using (var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
+                using (var sourceStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
                 {
                     var itemPath = getFullTargetPath(sourceFileName);
                     var pathParts = itemPath.Split('/');
