@@ -134,18 +134,21 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Copies data from a stream to a cached package file in the registry.
         /// </summary>
-        /// <param name="package">The package to cache.</param>
+        /// <param name="packageId">The ID of the package to cache.</param>
+        /// <param name="packageVersion">The version of the package to cache.</param>
         /// <param name="packageStream">Stream backed by the package to cache.</param>
         /// <param name="cancellationToken">Token used to cancel the operation.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="package"/> is null or <paramref name="packageStream"/> is null.</exception>
-        public async Task WriteToCacheAsync(RegisteredPackage package, Stream packageStream, CancellationToken cancellationToken)
+        /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
+        public async Task WriteToCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, Stream packageStream, CancellationToken cancellationToken)
         {
-            if (package == null)
-                throw new ArgumentNullException(nameof(package));
+            if (packageId == null)
+                throw new ArgumentNullException(nameof(packageId));
+            if (packageVersion == null)
+                throw new ArgumentNullException(nameof(packageVersion));
             if (packageStream == null)
                 throw new ArgumentNullException(nameof(packageStream));
 
-            var fileName = this.GetCachedPackagePath(package, true);
+            var fileName = this.GetCachedPackagePath(packageId, packageVersion, true);
             try
             {
                 using (var fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
@@ -162,49 +165,58 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Copies data from a stream to a cached package file in the registry.
         /// </summary>
-        /// <param name="package">The package to cache.</param>
+        /// <param name="packageId">The ID of the package to cache.</param>
+        /// <param name="packageVersion">The version of the package to cache.</param>
         /// <param name="packageStream">Stream backed by the package to cache.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="package"/> is null or <paramref name="packageStream"/> is null.</exception>
-        public Task WriteToCacheAsync(RegisteredPackage package, Stream packageStream) => this.WriteToCacheAsync(package, packageStream, default);
+        /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
+        public Task WriteToCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, Stream packageStream) => this.WriteToCacheAsync(packageId, packageVersion, packageStream, default);
         /// <summary>
         /// Deletes the specified package from the package cache.
         /// </summary>
-        /// <param name="package">The package to delete from the cache.</param>
+        /// <param name="packageId">The ID of the package to delete.</param>
+        /// <param name="packageVersion">The version of the package to delete.</param>
         /// <param name="cancellationToken">Token used to cancel the operation.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="package"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
         /// <remarks>
         /// No exception is raised if the package was not in the cache to begin with.
         /// </remarks>
-        public Task DeleteFromCacheAsync(RegisteredPackage package, CancellationToken cancellationToken)
+        public Task DeleteFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, CancellationToken cancellationToken)
         {
-            if (package == null)
-                throw new ArgumentNullException(nameof(package));
+            if (packageId == null)
+                throw new ArgumentNullException(nameof(packageId));
+            if (packageVersion == null)
+                throw new ArgumentNullException(nameof(packageVersion));
 
-            File.Delete(this.GetCachedPackagePath(package));
+            File.Delete(this.GetCachedPackagePath(packageId, packageVersion));
             return AH.CompletedTask;
         }
         /// <summary>
         /// Deletes the specified package from the package cache.
         /// </summary>
-        /// <param name="package">The package to delete from the cache.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="package"/> is null.</exception>
+        /// <param name="packageId">The ID of the package to delete.</param>
+        /// <param name="packageVersion">The version of the package to delete.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
         /// <remarks>
         /// No exception is raised if the package was not in the cache to begin with.
         /// </remarks>
-        public Task DeleteFromCacheAsync(RegisteredPackage package) => this.DeleteFromCacheAsync(package, default);
+        public Task DeleteFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion) => this.DeleteFromCacheAsync(packageId, packageVersion, default);
         /// <summary>
         /// Returns a stream backed by the specified cached package if possible; returns <c>null</c> if
         /// the package was not found in the cache.
         /// </summary>
-        /// <param name="package">The package to open.</param>
+        /// <param name="packageId">The ID of the package to open.</param>
+        /// <param name="packageVersion">The version of the package to open.</param>
         /// <param name="cancellationToken">Token used to cancel the operation.</param>
         /// <returns>Stream backed by the specified cached package, or null if the package was not found.</returns>
-        public Task<Stream> TryOpenFromCache(RegisteredPackage package, CancellationToken cancellationToken)
+        /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
+        public Task<Stream> TryOpenFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, CancellationToken cancellationToken)
         {
-            if (package == null)
-                throw new ArgumentNullException(nameof(package));
+            if (packageId == null)
+                throw new ArgumentNullException(nameof(packageId));
+            if (packageVersion == null)
+                throw new ArgumentNullException(nameof(packageVersion));
 
-            var fileName = this.GetCachedPackagePath(package);
+            var fileName = this.GetCachedPackagePath(packageId, packageVersion);
             if (!File.Exists(fileName))
                 return Task.FromResult<Stream>(null);
 
@@ -223,9 +235,10 @@ namespace Inedo.UPack.Packaging
         /// Returns a stream backed by the specified cached package if possible; returns <c>null</c> if
         /// the package was not found in the cache.
         /// </summary>
-        /// <param name="package">The package to open.</param>
+        /// <param name="packageId">The ID of the package to open.</param>
+        /// <param name="packageVersion">The version of the package to open.</param>
         /// <returns>Stream backed by the specified cached package, or null if the package was not found.</returns>
-        public Task<Stream> TryOpenFromCache(RegisteredPackage package) => this.TryOpenFromCache(package, default);
+        public Task<Stream> TryOpenFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion) => this.TryOpenFromCacheAsync(packageId, packageVersion, default);
 
         void IDisposable.Dispose()
         {
@@ -335,15 +348,15 @@ namespace Inedo.UPack.Packaging
 
             this.LockToken = null;
         }
-        private string GetCachedPackagePath(RegisteredPackage package, bool ensureDirectory = false)
+        private string GetCachedPackagePath(UniversalPackageId id, UniversalPackageVersion version, bool ensureDirectory = false)
         {
-            var directoryName = package.Group?.Replace('/', '$')?.Trim('$') + "$" + package.Name;
+            var directoryName = id.Group?.Replace('/', '$')?.Trim('$') + "$" + id.Name;
 
             var fullPath = Path.Combine(this.RegistryRoot, "packageCache", directoryName);
             if (ensureDirectory)
                 Directory.CreateDirectory(fullPath);
 
-            var fileName = Path.Combine(fullPath, $"{package.Name}-{package.Version}.upack");
+            var fileName = Path.Combine(fullPath, $"{id.Name}-{version}.upack");
 
             return Path.Combine(fullPath, fileName);
         }
