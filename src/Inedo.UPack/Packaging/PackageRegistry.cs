@@ -128,9 +128,104 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Removes a package registration entry from the registry.
         /// </summary>
-        /// <param name="package">THe package to unregister.</param>
+        /// <param name="package">The package to unregister.</param>
         /// <returns>True if package was unregistered; false if it was not in the registry.</returns>
         public Task<bool> UnregisterPackageAsync(RegisteredPackage package) => this.UnregisterPackageAsync(package, default);
+        /// <summary>
+        /// Copies data from a stream to a cached package file in the registry.
+        /// </summary>
+        /// <param name="package">The package to cache.</param>
+        /// <param name="packageStream">Stream backed by the package to cache.</param>
+        /// <param name="cancellationToken">Token used to cancel the operation.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="package"/> is null or <paramref name="packageStream"/> is null.</exception>
+        public async Task WriteToCacheAsync(RegisteredPackage package, Stream packageStream, CancellationToken cancellationToken)
+        {
+            if (package == null)
+                throw new ArgumentNullException(nameof(package));
+            if (packageStream == null)
+                throw new ArgumentNullException(nameof(packageStream));
+
+            var fileName = this.GetCachedPackagePath(package, true);
+            try
+            {
+                using (var fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
+                {
+                    await packageStream.CopyToAsync(fileStream, 81920, cancellationToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                File.Delete(fileName);
+                throw;
+            }
+        }
+        /// <summary>
+        /// Copies data from a stream to a cached package file in the registry.
+        /// </summary>
+        /// <param name="package">The package to cache.</param>
+        /// <param name="packageStream">Stream backed by the package to cache.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="package"/> is null or <paramref name="packageStream"/> is null.</exception>
+        public Task WriteToCacheAsync(RegisteredPackage package, Stream packageStream) => this.WriteToCacheAsync(package, packageStream, default);
+        /// <summary>
+        /// Deletes the specified package from the package cache.
+        /// </summary>
+        /// <param name="package">The package to delete from the cache.</param>
+        /// <param name="cancellationToken">Token used to cancel the operation.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="package"/> is null.</exception>
+        /// <remarks>
+        /// No exception is raised if the package was not in the cache to begin with.
+        /// </remarks>
+        public Task DeleteFromCacheAsync(RegisteredPackage package, CancellationToken cancellationToken)
+        {
+            if (package == null)
+                throw new ArgumentNullException(nameof(package));
+
+            File.Delete(this.GetCachedPackagePath(package));
+            return AH.CompletedTask;
+        }
+        /// <summary>
+        /// Deletes the specified package from the package cache.
+        /// </summary>
+        /// <param name="package">The package to delete from the cache.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="package"/> is null.</exception>
+        /// <remarks>
+        /// No exception is raised if the package was not in the cache to begin with.
+        /// </remarks>
+        public Task DeleteFromCacheAsync(RegisteredPackage package) => this.DeleteFromCacheAsync(package, default);
+        /// <summary>
+        /// Returns a stream backed by the specified cached package if possible; returns <c>null</c> if
+        /// the package was not found in the cache.
+        /// </summary>
+        /// <param name="package">The package to open.</param>
+        /// <param name="cancellationToken">Token used to cancel the operation.</param>
+        /// <returns>Stream backed by the specified cached package, or null if the package was not found.</returns>
+        public Task<Stream> TryOpenFromCache(RegisteredPackage package, CancellationToken cancellationToken)
+        {
+            if (package == null)
+                throw new ArgumentNullException(nameof(package));
+
+            var fileName = this.GetCachedPackagePath(package);
+            if (!File.Exists(fileName))
+                return Task.FromResult<Stream>(null);
+
+            try
+            {
+                return Task.FromResult<Stream>(new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete));
+            }
+            catch (IOException)
+            {
+                // The File.Exists check above should handle most instances of this, but there is still
+                // the possibility of a race condition if the file gets deleted before it is opened.
+                return Task.FromResult<Stream>(null);
+            }
+        }
+        /// <summary>
+        /// Returns a stream backed by the specified cached package if possible; returns <c>null</c> if
+        /// the package was not found in the cache.
+        /// </summary>
+        /// <param name="package">The package to open.</param>
+        /// <returns>Stream backed by the specified cached package, or null if the package was not found.</returns>
+        public Task<Stream> TryOpenFromCache(RegisteredPackage package) => this.TryOpenFromCache(package, default);
 
         void IDisposable.Dispose()
         {
@@ -239,6 +334,18 @@ namespace Inedo.UPack.Packaging
                 File.Delete(fileName);
 
             this.LockToken = null;
+        }
+        private string GetCachedPackagePath(RegisteredPackage package, bool ensureDirectory = false)
+        {
+            var directoryName = package.Group?.Replace('/', '$')?.Trim('$') + "$" + package.Name;
+
+            var fullPath = Path.Combine(this.RegistryRoot, "packageCache", directoryName);
+            if (ensureDirectory)
+                Directory.CreateDirectory(fullPath);
+
+            var fileName = Path.Combine(fullPath, $"{package.Name}-{package.Version}.upack");
+
+            return Path.Combine(fullPath, fileName);
         }
         private static List<RegisteredPackage> GetInstalledPackages(string registryRoot)
         {
