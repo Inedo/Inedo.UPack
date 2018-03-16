@@ -106,6 +106,31 @@ namespace Inedo.UPack.Packaging
             WriteInstalledPackages(this.RegistryRoot, packages);
             return AH.CompletedTask;
         }
+        /// <summary>
+        /// Removes a package registration entry from the registry.
+        /// </summary>
+        /// <param name="package">THe package to unregister.</param>
+        /// <param name="cancellationToken">Token used to cancel the operation.</param>
+        /// <returns>True if package was unregistered; false if it was not in the registry.</returns>
+        public Task<bool> UnregisterPackageAsync(RegisteredPackage package, CancellationToken cancellationToken)
+        {
+            if (package == null)
+                throw new ArgumentNullException(nameof(package));
+
+            var packages = GetInstalledPackages(this.RegistryRoot);
+
+            bool removed = packages.RemoveAll(p => PackageNameAndGroupEquals(p, package)) > 0;
+            if (removed)
+                WriteInstalledPackages(this.RegistryRoot, packages);
+
+            return Task.FromResult(removed);
+        }
+        /// <summary>
+        /// Removes a package registration entry from the registry.
+        /// </summary>
+        /// <param name="package">THe package to unregister.</param>
+        /// <returns>True if package was unregistered; false if it was not in the registry.</returns>
+        public Task<bool> UnregisterPackageAsync(RegisteredPackage package) => this.UnregisterPackageAsync(package, default);
 
         void IDisposable.Dispose()
         {
