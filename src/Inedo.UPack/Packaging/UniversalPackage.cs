@@ -157,6 +157,12 @@ namespace Inedo.UPack.Packaging
             );
         }
         /// <summary>
+        /// Extracts all items in the package to the specified target path.
+        /// </summary>
+        /// <param name="targetPath">Root path to extract items to.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="targetPath"/> is null or empty.</exception>
+        public Task ExtractAllItemsAsync(string targetPath) => this.ExtractAllItemsAsync(targetPath, default);
+        /// <summary>
         /// Extracts the content items in the package to the specified target path.
         /// </summary>
         /// <param name="targetPath">Root path to extract items to.</param>
@@ -174,6 +180,12 @@ namespace Inedo.UPack.Packaging
                 cancellationToken
             );
         }
+        /// <summary>
+        /// Extracts the content items in the package to the specified target path.
+        /// </summary>
+        /// <param name="targetPath">Root path to extract items to.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="targetPath"/> is null or empty.</exception>
+        public Task ExtractContentItemsAsync(string targetPath) => this.ExtractContentItemsAsync(targetPath, default);
 
         private UniversalPackageMetadata ReadMetadata()
         {
@@ -194,6 +206,8 @@ namespace Inedo.UPack.Packaging
         {
             foreach (var entry in entries)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var relativePath = getRelativePath(entry);
                 var destPath = Path.Combine(targetPath.Replace('/', Path.DirectorySeparatorChar), relativePath.Replace('/', Path.DirectorySeparatorChar));
 
