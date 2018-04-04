@@ -16,6 +16,7 @@ namespace Inedo.UPack.Net
     public sealed class UniversalFeedClient
     {
         private readonly ApiTransport transport;
+        private Lazy<LocalPackageRepository> localRepository;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalFeedClient"/> class.
@@ -46,6 +47,15 @@ namespace Inedo.UPack.Net
         {
             this.Endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
             this.transport = transport ?? new DefaultApiTransport();
+            this.localRepository = new Lazy<LocalPackageRepository>(initLocalRepository);
+
+            LocalPackageRepository initLocalRepository()
+            {
+                if (this.Endpoint.IsLocalDirectory)
+                    return new LocalPackageRepository(this.Endpoint.Uri.LocalPath);
+                else
+                    throw new NotSupportedException();
+            }
         }
 
         /// <summary>
@@ -69,6 +79,9 @@ namespace Inedo.UPack.Net
         /// <returns>List of packages in the specified group.</returns>
         public async Task<IReadOnlyList<RemoteUniversalPackage>> ListPackagesAsync(string group, int? maxCount, CancellationToken cancellationToken)
         {
+            if (this.Endpoint.IsLocalDirectory)
+                return this.localRepository.Value.ListPackages(group).ToList();
+
             var url = FormatUrl("packages", ("group", group), ("count", maxCount));
 
             var request = new ApiRequest(this.Endpoint, url);
@@ -113,6 +126,9 @@ namespace Inedo.UPack.Net
         {
             if (string.IsNullOrEmpty(searchTerm))
                 return await this.ListPackagesAsync(null, null, cancellationToken).ConfigureAwait(false);
+
+            if (this.Endpoint.IsLocalDirectory)
+                return this.localRepository.Value.SearchPackages(searchTerm).ToList();
 
             var url = FormatUrl("search", ("term", searchTerm));
 
@@ -243,6 +259,9 @@ namespace Inedo.UPack.Net
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
 
+            if (this.Endpoint.IsLocalDirectory)
+                return this.localRepository.Value.GetPackageStream(id, version);
+
             var url = "download/" + Uri.EscapeUriString(id.ToString());
             if (version != null)
                 url += "/" + Uri.EscapeUriString(version.ToString());
@@ -295,6 +314,9 @@ namespace Inedo.UPack.Net
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentNullException(nameof(filePath));
 
+            if (this.Endpoint.IsLocalDirectory)
+                return this.localRepository.Value.GetPackageFileStream(id, version, filePath);
+
             var url = "download-file/" + Uri.EscapeUriString(id.ToString());
             if (version != null)
                 url += "/" + Uri.EscapeUriString(version.ToString()) + "?path=" + Uri.EscapeDataString(filePath);
@@ -331,6 +353,10 @@ namespace Inedo.UPack.Net
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
+            if (this.Endpoint.IsLocalDirectory)
+                throw new NotSupportedException();
+
+
             var request = new ApiRequest(this.Endpoint, "upload", method: "PUT", contentType: "application/zip", requestBody: stream);
 
             using (var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false))
@@ -359,6 +385,9 @@ namespace Inedo.UPack.Net
             if (version == null)
                 throw new ArgumentNullException(nameof(version));
 
+            if (this.Endpoint.IsLocalDirectory)
+                throw new NotSupportedException();
+
             var url = "delete/" + Uri.EscapeUriString(id.ToString()) + "/" + Uri.EscapeUriString(version.ToString());
             var request = new ApiRequest(this.Endpoint, url, method: "DELETE");
 
@@ -369,6 +398,19 @@ namespace Inedo.UPack.Net
 
         private async Task<IReadOnlyList<RemoteUniversalPackageVersion>> ListVersionsInternalAsync(UniversalPackageId id, UniversalPackageVersion version, bool includeFileList, int? maxCount, CancellationToken cancellationToken)
         {
+            if (this.Endpoint.IsLocalDirectory)
+            {
+                if (version == null)
+                {
+                    return this.localRepository.Value.ListPackageVersions(id).ToList();
+                }
+                else
+                {
+                    var v = this.localRepository.Value.GetPackageVersion(id, version);
+                    return v != null ? new[] { v } : new RemoteUniversalPackageVersion[0];
+                }
+            }
+
             var url = FormatUrl("versions", ("group", id?.Group), ("name", id?.Name), ("version", version?.ToString()), ("includeFileList", includeFileList), ("count", maxCount));
             var request = new ApiRequest(this.Endpoint, url);
             using (var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false))

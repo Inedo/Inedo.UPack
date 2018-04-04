@@ -20,8 +20,8 @@ namespace Inedo.UPack.Net
         {
             this.Uri = uri ?? throw new ArgumentNullException(nameof(uri));
 
-            if (!string.Equals(uri.Scheme, "http", StringComparison.OrdinalIgnoreCase) && !string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("Universal feed uri must use http or https.");
+            if (!string.Equals(uri.Scheme, "http", StringComparison.OrdinalIgnoreCase) && !string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase) && !string.Equals(uri.Scheme, "file", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Universal feed uri must use http, https or file.");
 
             this.UseDefaultCredentials = useDefaultCredentials;
         }
@@ -90,6 +90,8 @@ namespace Inedo.UPack.Net
         /// Gets the password for basic authentication.
         /// </summary>
         public SecureString Password { get; }
+
+        internal bool IsLocalDirectory => string.Equals(this.Uri.Scheme, "file", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Returns some identifying information abou the feed endpoint.
