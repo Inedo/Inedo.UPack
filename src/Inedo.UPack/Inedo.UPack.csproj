@@ -1,13 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net45;net46</TargetFrameworks>
     <LangVersion>latest</LangVersion>
+    <Title>UPackLib.NET</Title>
     <Authors>Inedo</Authors>
     <Company>Inedo</Company>
     <Product>UPack</Product>
     <Description>Provides interfaces for working with Universal Packages (upack) and associated feeds.</Description>
-    <PackageTags>upack proget</PackageTags>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/Inedo/Inedo.UPack/master/LICENSE.md</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/Inedo/Inedo.UPack</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Inedo/Inedo.UPack.git</RepositoryUrl>
+    <PackageTags>upack</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
