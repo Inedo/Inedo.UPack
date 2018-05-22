@@ -27,7 +27,7 @@ namespace Inedo.UPack.Net
             this.Title = (string)obj["title"];
             this.Icon = (string)obj["icon"];
             this.Description = (string)obj["description"];
-            this.Size = (long)obj["size"];
+            this.Size = (long?)obj["size"] ?? 0;
             this.PublishedDate = (DateTimeOffset)obj["published"];
             this.Downloads = (int?)obj["downloads"] ?? 0;
             var sha1String = (string)obj["sha1"];
