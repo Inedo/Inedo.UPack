@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -22,11 +23,13 @@ namespace Inedo.UPack.Packaging
         {
             this.properties = new Dictionary<string, object>();
             this.Dependencies = new DependencyList(this);
+            this.RepackageHistory = new RepackageEntryList(this);
         }
         internal UniversalPackageMetadata(JObject obj)
         {
-            this.properties = (Dictionary<string, object>)obj.ToObject(typeof(Dictionary<string, object>));
+            this.properties = (Dictionary<string, object>)CanonicalizeJsonToken(obj);
             this.Dependencies = new DependencyList(this);
+            this.RepackageHistory = new RepackageEntryList(this);
         }
 
         /// <summary>
@@ -45,53 +48,91 @@ namespace Inedo.UPack.Packaging
         /// </summary>
         public string Group
         {
-            get => (string)this.GetPropertyValue();
-            set => this.SetPropertyValue(value);
+            get => (string)this.GetPropertyValue("group");
+            set => this.SetPropertyValue(value, "group");
         }
         /// <summary>
         /// Gets or sets the package name.
         /// </summary>
         public string Name
         {
-            get => (string)this.GetPropertyValue();
-            set => this.SetPropertyValue(value);
+            get => (string)this.GetPropertyValue("name");
+            set => this.SetPropertyValue(value, "name");
         }
         /// <summary>
         /// Gets or sets the package vesion.
         /// </summary>
         public UniversalPackageVersion Version
         {
-            get => UniversalPackageVersion.Parse((string)this.GetPropertyValue());
-            set => this.SetPropertyValue(value?.ToString());
+            get => UniversalPackageVersion.Parse((string)this.GetPropertyValue("version"));
+            set => this.SetPropertyValue(value?.ToString(), "version");
         }
         /// <summary>
         /// Gets or sets the package title.
         /// </summary>
         public string Title
         {
-            get => (string)this.GetPropertyValue();
-            set => this.SetPropertyValue(value);
+            get => (string)this.GetPropertyValue("title");
+            set => this.SetPropertyValue(value, "title");
         }
         /// <summary>
         /// Gets or sets the package description.
         /// </summary>
         public string Description
         {
-            get => (string)this.GetPropertyValue();
-            set => this.SetPropertyValue(value);
+            get => (string)this.GetPropertyValue("description");
+            set => this.SetPropertyValue(value, "description");
         }
         /// <summary>
         /// Gets or sets the package icon URL.
         /// </summary>
         public string Icon
         {
-            get => (string)this.GetPropertyValue();
-            set => this.SetPropertyValue(value);
+            get => (string)this.GetPropertyValue("icon");
+            set => this.SetPropertyValue(value, "icon");
         }
+
+        /// <summary>
+        /// Gets or sets date when the package was first created.
+        /// </summary>
+        public DateTimeOffset? CreatedDate
+        {
+            get => this.TryGetDateTime("createdDate");
+            set => this.SetPropertyValue(value?.ToString("o"), "createdDate");
+        }
+        /// <summary>
+        /// Gets or sets a string describing the reason or purpose of the creation.
+        /// </summary>
+        public string CreatedReason
+        {
+            get => (string)this.GetPropertyValue("createdReason");
+            set => this.SetPropertyValue(value, "createdReason");
+        }
+        /// <summary>
+        /// Gets or sets a string describing the mechanism the package was created with.
+        /// </summary>
+        public string CreatedUsing
+        {
+            get => (string)this.GetPropertyValue("createdUsing");
+            set => this.SetPropertyValue(value, "createdUsing");
+        }
+        /// <summary>
+        /// Gets or sets a string describing the person or service that performed the installation.
+        /// </summary>
+        public string CreatedBy
+        {
+            get => (string)this.GetPropertyValue("createdBy");
+            set => this.SetPropertyValue(value, "createdBy");
+        }
+
         /// <summary>
         /// Gets the package dependency list.
         /// </summary>
         public DependencyList Dependencies { get; }
+        /// <summary>
+        /// Gets the repackaging history.
+        /// </summary>
+        public RepackageEntryList RepackageHistory { get; }
         /// <summary>
         /// Gets a collection of all property names.
         /// </summary>
@@ -135,13 +176,20 @@ namespace Inedo.UPack.Packaging
 
         private void AddInternal(string key, object value) => this.properties[key] = value;
         private object GetInternal(string propertyName) => this.properties.TryGetValue(propertyName, out var value) ? value : null;
-        private object GetPropertyValue([CallerMemberName] string propertyName = null) => this.GetInternal(propertyName.ToLowerInvariant());
-        private void SetPropertyValue(object value, [CallerMemberName] string propertyName = null)
+        private object GetPropertyValue(string propertyName) => this.GetInternal(propertyName);
+        private void SetPropertyValue(object value, string propertyName)
         {
             if (value != null)
-                this.properties[propertyName.ToLowerInvariant()] = value;
+                this.properties[propertyName] = value;
             else
-                this.properties.Remove(propertyName.ToLowerInvariant());
+                this.properties.Remove(propertyName);
+        }
+        private DateTimeOffset? TryGetDateTime(string propertyName)
+        {
+            if (this.GetInternal(propertyName) is string s && DateTimeOffset.TryParse(s, out var d))
+                return d;
+            else
+                return null;
         }
 
         void IDictionary<string, object>.Add(string key, object value) => this.AddInternal(key, value);
@@ -152,5 +200,22 @@ namespace Inedo.UPack.Packaging
         void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex) => ((ICollection<KeyValuePair<string, object>>)this.properties).CopyTo(array, arrayIndex);
         bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item) => ((ICollection<KeyValuePair<string, object>>)this.properties).Remove(item);
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+        private static object CanonicalizeJsonToken(JToken token)
+        {
+            if (token is JValue v)
+                return v.ToString();
+
+            if (token is JObject o)
+            {
+                return o.Properties()
+                    .ToDictionary(p => p.Name, p => CanonicalizeJsonToken(p.Value));
+            }
+
+            if (token is JArray a)
+                return a.Select(CanonicalizeJsonToken).ToArray();
+
+            return null;
+        }
     }
 }
