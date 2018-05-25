@@ -22,19 +22,19 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Gets or sets date when the package was first created.
         /// </summary>
-        public DateTimeOffset? CreatedDate { get; set; }
+        public DateTimeOffset? Date { get; set; }
         /// <summary>
         /// Gets or sets a string describing the reason or purpose of the creation.
         /// </summary>
-        public string CreatedReason { get; set; }
+        public string Reason { get; set; }
         /// <summary>
         /// Gets or sets a string describing the mechanism the package was created with.
         /// </summary>
-        public string CreatedUsing { get; set; }
+        public string Using { get; set; }
         /// <summary>
         /// Gets or sets a string describing the person or service that performed the installation.
         /// </summary>
-        public string CreatedBy { get; set; }
+        public string By { get; set; }
         /// <summary>
         /// Gets or sets a URL describing where more information about the repackaging can be found.
         /// </summary>

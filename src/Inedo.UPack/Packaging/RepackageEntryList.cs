@@ -38,10 +38,10 @@ namespace Inedo.UPack.Packaging
                                 new RepackageHistoryEntry
                                 {
                                     Id = getString("id"),
-                                    CreatedDate = getDate("date"),
-                                    CreatedReason = getString("reason"),
-                                    CreatedUsing = getString("using"),
-                                    CreatedBy = getString("by"),
+                                    Date = getDate("date"),
+                                    Reason = getString("reason"),
+                                    Using = getString("using"),
+                                    By = getString("by"),
                                     Url = getString("url")
                                 }
                             );
@@ -84,14 +84,14 @@ namespace Inedo.UPack.Packaging
                     var dict = new Dictionary<string, object>();
                     if (!string.IsNullOrEmpty(entry.Id))
                         dict["id"] = entry.Id;
-                    if (entry.CreatedDate != null)
-                        dict["date"] = entry.CreatedDate?.ToString("o");
-                    if (!string.IsNullOrEmpty(entry.CreatedReason))
-                        dict["reason"] = entry.CreatedReason;
-                    if (!string.IsNullOrEmpty(entry.CreatedUsing))
-                        dict["using"] = entry.CreatedUsing;
-                    if (!string.IsNullOrEmpty(entry.CreatedBy))
-                        dict["by"] = entry.CreatedBy;
+                    if (entry.Date != null)
+                        dict["date"] = entry.Date?.ToString("o");
+                    if (!string.IsNullOrEmpty(entry.Reason))
+                        dict["reason"] = entry.Reason;
+                    if (!string.IsNullOrEmpty(entry.Using))
+                        dict["using"] = entry.Using;
+                    if (!string.IsNullOrEmpty(entry.By))
+                        dict["by"] = entry.By;
                     if (!string.IsNullOrEmpty(entry.Url))
                         dict["url"] = entry.Url;
 
