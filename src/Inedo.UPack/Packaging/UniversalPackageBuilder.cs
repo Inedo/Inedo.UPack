@@ -163,7 +163,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
-        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, CancellationToken cancellationToken) => this.AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileAsync, cancellationToken);
+        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, CancellationToken cancellationToken) => this.AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileAsync, this.AddEmptyDirectory, cancellationToken);
 
         /// <summary>
         /// Adds the files and directories from the specified source path to the specified raw target path in the package.
@@ -194,7 +194,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
-        public Task AddRawContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, CancellationToken cancellationToken) => this.AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileRawAsync, cancellationToken);
+        public Task AddRawContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, CancellationToken cancellationToken) => this.AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileRawAsync, this.AddEmptyDirectoryRaw, cancellationToken);
 
         private static Stream CreateFile(string fileName)
         {
@@ -213,7 +213,7 @@ namespace Inedo.UPack.Packaging
                 metadata.WriteJson(jsonWriter);
             }
         }
-        private async Task AddContentsInternalAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, Func<Stream, string, DateTimeOffset, CancellationToken, Task> add, CancellationToken cancellationToken)
+        private async Task AddContentsInternalAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, Func<Stream, string, DateTimeOffset, CancellationToken, Task> add, Action<string> addEmptyDir, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(sourcePath))
                 throw new ArgumentNullException(nameof(sourcePath));
@@ -237,7 +237,7 @@ namespace Inedo.UPack.Packaging
                 {
                     var itemPath = getFullTargetPath(sourceFileName);
                     var pathParts = itemPath.Split('/');
-                    for (int i = 1; i < pathParts.Length - 1; i++)
+                    for (int i = 1; i < pathParts.Length; i++)
                         addedDirs.Add(string.Join("/", pathParts.Take(i)));
 
                     await add(sourceStream, itemPath, File.GetLastWriteTimeUtc(sourceFileName), cancellationToken).ConfigureAwait(false);
@@ -252,14 +252,14 @@ namespace Inedo.UPack.Packaging
                 {
                     var itemPath = getFullTargetPath(sourceDirName);
                     if (addedDirs.Add(itemPath))
-                        this.AddEmptyDirectory(itemPath);
+                        addEmptyDir(itemPath);
                 }
             }
 
             string getFullTargetPath(string fullSourcePath)
             {
                 var path = fullSourcePath.Substring(sourcePath.Length).Trim('/', '\\').Replace('\\', '/');
-                return string.IsNullOrEmpty(targetPath) ? path : (root + "/" + path);
+                return string.IsNullOrEmpty(root) ? path : (root + "/" + path);
             }
         }
     }
