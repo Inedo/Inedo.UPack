@@ -16,7 +16,25 @@ namespace Inedo.UPack.Packaging
     {
         private bool disposed;
 
-        private PackageRegistry(string registryRoot) => this.RegistryRoot = registryRoot;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PackageRegistry"/> class.
+        /// </summary>
+        /// <param name="registryRoot">The root directory of the registry. This must be an absolute path.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="registryRoot"/> is null or empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="registryRoot"/> is not an absolute path.</exception>
+        /// <remarks>
+        /// To initialize a <see cref="PackageRegistry"/> instance with one of the standard registry locations, use the
+        /// <see cref="GetRegistry(bool)"/> static method.
+        /// </remarks>
+        public PackageRegistry(string registryRoot)
+        {
+            if (string.IsNullOrWhiteSpace(registryRoot))
+                throw new ArgumentNullException(nameof(registryRoot));
+            if (!Path.IsPathRooted(registryRoot))
+                throw new ArgumentException("Registry root must be an absolute path.");
+
+            this.RegistryRoot = registryRoot;
+        }
 
         /// <summary>
         /// Gets the root directory of the package registry.
