@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -24,12 +23,14 @@ namespace Inedo.UPack.Packaging
             this.properties = new Dictionary<string, object>();
             this.Dependencies = new DependencyList(this);
             this.RepackageHistory = new RepackageEntryList(this);
+            this.Tags = new TagList(this);
         }
         internal UniversalPackageMetadata(JObject obj)
         {
             this.properties = (Dictionary<string, object>)CanonicalizeJsonToken(obj);
             this.Dependencies = new DependencyList(this);
             this.RepackageHistory = new RepackageEntryList(this);
+            this.Tags = new TagList(this);
         }
 
         /// <summary>
@@ -133,6 +134,10 @@ namespace Inedo.UPack.Packaging
         /// Gets the repackaging history.
         /// </summary>
         public RepackageEntryList RepackageHistory { get; }
+        /// <summary>
+        /// Gets the tags.
+        /// </summary>
+        public TagList Tags { get; }
         /// <summary>
         /// Gets a collection of all property names.
         /// </summary>
