@@ -33,6 +33,8 @@ namespace Inedo.UPack.Packaging
                     var list = new List<UniversalPackageDependency>(a.Length + 1);
                     foreach (var item in a)
                         list.Add(UniversalPackageDependency.Parse((string)item));
+
+                    return list;
                 }
 
                 return new List<UniversalPackageDependency>();
