@@ -71,7 +71,17 @@ namespace Inedo.UPack.Packaging
         /// <param name="timestamp">Timestamp to record for the entry.</param>
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null or <paramref name="path"/> is null or empty.</exception>
-        public async Task AddFileRawAsync(Stream stream, string path, DateTimeOffset timestamp, CancellationToken cancellationToken)
+        public Task AddFileRawAsync(Stream stream, string path, DateTimeOffset timestamp, CancellationToken cancellationToken) => this.AddFileRawAsync(stream, path, timestamp, CompressionLevel.Optimal, cancellationToken);
+        /// <summary>
+        /// Copies the data in the specified stream to the package using the specified raw path (relative to archive root) and timestamp.
+        /// </summary>
+        /// <param name="stream">Source stream to copy from.</param>
+        /// <param name="path">Raw path of entry to create in the package (relative to archive root).</param>
+        /// <param name="timestamp">Timestamp to record for the entry.</param>
+        /// <param name="compressionLevel">Compression level to use for the added file.</param>
+        /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null or <paramref name="path"/> is null or empty.</exception>
+        public async Task AddFileRawAsync(Stream stream, string path, DateTimeOffset timestamp, CompressionLevel compressionLevel, CancellationToken cancellationToken)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
@@ -79,7 +89,7 @@ namespace Inedo.UPack.Packaging
                 throw new ArgumentNullException(nameof(path));
 
             var p = path.Replace('\\', '/').Trim('/');
-            var entry = this.zip.CreateEntry(p);
+            var entry = this.zip.CreateEntry(p, compressionLevel);
             entry.LastWriteTime = timestamp;
             using (var entryStream = entry.Open())
             {
@@ -94,14 +104,24 @@ namespace Inedo.UPack.Packaging
         /// <param name="timestamp">Timestamp to record for the entry.</param>
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null or <paramref name="path"/> is null or empty.</exception>
-        public Task AddFileAsync(Stream stream, string path, DateTimeOffset timestamp, CancellationToken cancellationToken)
+        public Task AddFileAsync(Stream stream, string path, DateTimeOffset timestamp, CancellationToken cancellationToken) => this.AddFileAsync(stream, path, timestamp, CompressionLevel.Optimal, cancellationToken);
+        /// <summary>
+        /// Copies the data in the specified stream to the package using the specified content path (relative to package directory) and timestamp.
+        /// </summary>
+        /// <param name="stream">Source stream to copy from.</param>
+        /// <param name="path">Path of entry to create in the package (relative to package directory).</param>
+        /// <param name="timestamp">Timestamp to record for the entry.</param>
+        /// <param name="compressionLevel">Compression level to use for the added file.</param>
+        /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null or <paramref name="path"/> is null or empty.</exception>
+        public Task AddFileAsync(Stream stream, string path, DateTimeOffset timestamp, CompressionLevel compressionLevel, CancellationToken cancellationToken)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
             if (string.IsNullOrEmpty(path))
                 throw new ArgumentNullException(nameof(path));
 
-            return this.AddFileRawAsync(stream, "package/" + path.Trim('/', '\\'), timestamp, cancellationToken);
+            return this.AddFileRawAsync(stream, "package/" + path.Trim('/', '\\'), timestamp, compressionLevel, cancellationToken);
         }
         /// <summary>
         /// Creates an entry for an empty directory in the package using the specified raw path (relative to archive root).
