@@ -23,7 +23,7 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackage"/> class.
         /// </summary>
-        /// <param name="stream">Stream backed by the universal package.</param>
+        /// <param name="stream">Stream backed by the universal package. If this stream does not support seeking, a copy will be made.</param>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
         /// <exception cref="InvalidDataException">The stream does not contain a valid universal package.</exception>
         public UniversalPackage(Stream stream)
@@ -33,7 +33,7 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackage"/> class.
         /// </summary>
-        /// <param name="stream">Stream backed by the universal package.</param>
+        /// <param name="stream">Stream backed by the universal package. If this stream does not support seeking, a copy will be made.</param>
         /// <param name="leaveOpen">Value indicating whether to leave the underlying stream open when the instance is disposed. The default is false.</param>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
         /// <exception cref="InvalidDataException">The stream does not contain a valid universal package.</exception>
@@ -42,7 +42,21 @@ namespace Inedo.UPack.Packaging
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            this.zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen);
+            if (!stream.CanSeek)
+            {
+                var tempStream = new FileStream(Path.GetTempFileName(), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
+                stream.CopyTo(tempStream);
+                if (!leaveOpen)
+                    stream.Dispose();
+
+                tempStream.Position = 0;
+                this.zip = new ZipArchive(tempStream, ZipArchiveMode.Read, false);
+            }
+            else
+            {
+                this.zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen);
+            }
+
             this.Entries = new EntryCollection(this);
             this.metadata = this.ReadMetadata();
         }
