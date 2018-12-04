@@ -41,6 +41,7 @@ namespace Inedo.UPack.Net
 
             if (request.RequestBody != null)
             {
+                webRequest.AllowWriteStreamBuffering = false;
                 using (var requestStream = await webRequest.GetRequestStreamAsync().ConfigureAwait(false))
                 {
                     await request.RequestBody.CopyToAsync(requestStream, 81920, cancellationToken).ConfigureAwait(false);
