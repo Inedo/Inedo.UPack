@@ -41,7 +41,12 @@ namespace Inedo.UPack.Net
 
             if (request.RequestBody != null)
             {
-                webRequest.AllowWriteStreamBuffering = false;
+                if (request.RequestBody.CanSeek)
+                {
+                    webRequest.AllowWriteStreamBuffering = false;
+                    webRequest.ContentLength = request.RequestBody.Length - request.RequestBody.Position;
+                }
+
                 using (var requestStream = await webRequest.GetRequestStreamAsync().ConfigureAwait(false))
                 {
                     await request.RequestBody.CopyToAsync(requestStream, 81920, cancellationToken).ConfigureAwait(false);

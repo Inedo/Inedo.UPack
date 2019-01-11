@@ -345,7 +345,7 @@ namespace Inedo.UPack.Net
         /// <summary>
         /// Uploads the package in the specified stream to the feed.
         /// </summary>
-        /// <param name="stream">Stream containg a universal package.</param>
+        /// <param name="stream">Stream containing a universal package.</param>
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
         public async Task UploadPackageAsync(Stream stream, CancellationToken cancellationToken)
