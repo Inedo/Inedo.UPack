@@ -44,7 +44,7 @@ namespace Inedo.UPack.Packaging
 
             if (!stream.CanSeek)
             {
-                var tempStream = new FileStream(Path.GetTempFileName(), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
+                var tempStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
                 stream.CopyTo(tempStream);
                 if (!leaveOpen)
                     stream.Dispose();
