@@ -1,6 +1,7 @@
-﻿using System.Reflection;
+﻿using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace Inedo.UPack
 {
@@ -82,6 +83,23 @@ namespace Inedo.UPack
             }
 
             return true;
+        }
+
+        public static object CanonicalizeJsonToken(JToken token)
+        {
+            if (token is JValue v)
+                return v.ToString();
+
+            if (token is JObject o)
+            {
+                return o.Properties()
+                    .ToDictionary(p => p.Name, p => CanonicalizeJsonToken(p.Value));
+            }
+
+            if (token is JArray a)
+                return a.Select(CanonicalizeJsonToken).ToArray();
+
+            return null;
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Inedo.UPack.Packaging
 {
@@ -389,11 +390,12 @@ namespace Inedo.UPack.Packaging
             using (var streamReader = new StreamReader(configStream, AH.UTF8))
             using (var jsonReader = new JsonTextReader(streamReader))
             {
-                return (new JsonSerializer().Deserialize<RegisteredPackage[]>(jsonReader) ?? new RegisteredPackage[0])
+                return JArray.Load(jsonReader)
+                    .Select(o => new RegisteredPackage((JObject)o))
                     .ToList();
             }
         }
-        private static void WriteInstalledPackages(string registryRoot, IEnumerable<IRegisteredPackage> packages)
+        private static void WriteInstalledPackages(string registryRoot, IEnumerable<RegisteredPackage> packages)
         {
             Directory.CreateDirectory(registryRoot);
             var fileName = Path.Combine(registryRoot, "installedPackages.json");
@@ -402,10 +404,10 @@ namespace Inedo.UPack.Packaging
             using (var streamWriter = new StreamWriter(configStream, AH.UTF8))
             using (var jsonWriter = new JsonTextWriter(streamWriter))
             {
-                new JsonSerializer { Formatting = Formatting.Indented }.Serialize(jsonWriter, packages.ToArray());
+                new JsonSerializer { Formatting = Formatting.Indented }.Serialize(jsonWriter, packages.Select(p => p.GetInternalDictionary()).ToArray());
             }
         }
-        private static bool PackageNameAndGroupEquals(IRegisteredPackage p1, IRegisteredPackage p2)
+        private static bool PackageNameAndGroupEquals(RegisteredPackage p1, RegisteredPackage p2)
         {
             if (ReferenceEquals(p1, p2))
                 return true;

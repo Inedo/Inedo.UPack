@@ -27,7 +27,7 @@ namespace Inedo.UPack.Packaging
         }
         internal UniversalPackageMetadata(JObject obj)
         {
-            this.properties = (Dictionary<string, object>)CanonicalizeJsonToken(obj);
+            this.properties = (Dictionary<string, object>)AH.CanonicalizeJsonToken(obj);
             this.Dependencies = new DependencyList(this);
             this.RepackageHistory = new RepackageEntryList(this);
             this.Tags = new TagList(this);
@@ -205,22 +205,5 @@ namespace Inedo.UPack.Packaging
         void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex) => ((ICollection<KeyValuePair<string, object>>)this.properties).CopyTo(array, arrayIndex);
         bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item) => ((ICollection<KeyValuePair<string, object>>)this.properties).Remove(item);
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-
-        private static object CanonicalizeJsonToken(JToken token)
-        {
-            if (token is JValue v)
-                return v.ToString();
-
-            if (token is JObject o)
-            {
-                return o.Properties()
-                    .ToDictionary(p => p.Name, p => CanonicalizeJsonToken(p.Value));
-            }
-
-            if (token is JArray a)
-                return a.Select(CanonicalizeJsonToken).ToArray();
-
-            return null;
-        }
     }
 }
