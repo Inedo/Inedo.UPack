@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net45;net46</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net45;net46;netcoreapp3.1</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Title>UPackLib.NET</Title>
     <Authors>Inedo</Authors>
@@ -31,6 +31,12 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Release|net45'">
     <DocumentationFile>bin\Release\net45\Inedo.UPack.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Debug|netcoreapp3.1'">
+    <DocumentationFile>bin\Debug\netcoreapp3.1\Inedo.UPack.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Release|netcoreapp3.1'">
+    <DocumentationFile>bin\Release\netcoreapp3.1\Inedo.UPack.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net45'">
     <Reference Include="System.IO.Compression" />
