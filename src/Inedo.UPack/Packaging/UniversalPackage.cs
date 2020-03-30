@@ -17,8 +17,8 @@ namespace Inedo.UPack.Packaging
     /// </summary>
     public sealed class UniversalPackage : IDisposable
     {
-        private ZipArchive zip;
-        private UniversalPackageMetadata metadata;
+        private readonly ZipArchive zip;
+        private readonly UniversalPackageMetadata metadata;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackage"/> class.
@@ -82,6 +82,10 @@ namespace Inedo.UPack.Packaging
         /// Gets the version of the package.
         /// </summary>
         public UniversalPackageVersion Version => this.metadata.Version;
+        /// <summary>
+        /// Gets the package short description (summary).
+        /// </summary>
+        public string ShortDescription => this.metadata.ShortDescription;
         /// <summary>
         /// Gets the entries contained in the package.
         /// </summary>

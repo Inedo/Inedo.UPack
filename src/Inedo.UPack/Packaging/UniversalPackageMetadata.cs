@@ -13,7 +13,7 @@ namespace Inedo.UPack.Packaging
     [Serializable]
     public sealed partial class UniversalPackageMetadata : IDictionary<string, object>
     {
-        private Dictionary<string, object> properties;
+        private readonly Dictionary<string, object> properties;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackageMetadata"/> class.
@@ -83,6 +83,14 @@ namespace Inedo.UPack.Packaging
         {
             get => (string)this.GetPropertyValue("description");
             set => this.SetPropertyValue(value, "description");
+        }
+        /// <summary>
+        /// Gets or sets the package short description (summary).
+        /// </summary>
+        public string ShortDescription
+        {
+            get => (string)this.GetPropertyValue("shortDescription");
+            set => this.SetPropertyValue(value, "shortDescription");
         }
         /// <summary>
         /// Gets or sets the package icon URL.
