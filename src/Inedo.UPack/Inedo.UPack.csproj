@@ -20,6 +20,7 @@
     <SignAssembly>true</SignAssembly>
     <NoWarn>NU5105</NoWarn>
     <AssemblyOriginatorKeyFile>Inedo.UPack.snk</AssemblyOriginatorKeyFile>
+    <PackageIcon>upack-icon.png</PackageIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Debug|netstandard2.0'">
     <DocumentationFile>bin\Debug\netstandard2.0\Inedo.UPack.xml</DocumentationFile>
@@ -49,5 +50,11 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="upack-icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 </Project>
