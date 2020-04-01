@@ -17,8 +17,9 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <Version>0.0.0</Version>
-    <SignAssembly>false</SignAssembly>
+    <SignAssembly>true</SignAssembly>
     <NoWarn>NU5105</NoWarn>
+    <AssemblyOriginatorKeyFile>Inedo.UPack.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Debug|netstandard2.0'">
     <DocumentationFile>bin\Debug\netstandard2.0\Inedo.UPack.xml</DocumentationFile>
