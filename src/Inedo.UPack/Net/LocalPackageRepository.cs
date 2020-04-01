@@ -26,7 +26,7 @@ namespace Inedo.UPack.Net
         {
             return this.allPackages.Value
                 .Where(g => group == null || string.Equals(g.Key.Group, group, StringComparison.OrdinalIgnoreCase))
-                .Select(g => new RemoteUniversalPackage( GetMungedPackage(g)));
+                .Select(g => new RemoteUniversalPackage(GetMungedPackage(g)));
         }
         public IEnumerable<RemoteUniversalPackage> SearchPackages(string searchTerm)
         {
@@ -35,10 +35,12 @@ namespace Inedo.UPack.Net
 
             bool isMatch(string s)
             {
+                if (string.IsNullOrEmpty(searchTerm))
+                    return true;
                 if (string.IsNullOrEmpty(s))
                     return false;
 
-                return s.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0;
+                return s.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
             }
         }
         public IEnumerable<RemoteUniversalPackageVersion> ListPackageVersions(UniversalPackageId id)
