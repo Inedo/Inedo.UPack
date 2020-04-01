@@ -152,7 +152,7 @@ namespace Inedo.UPack.Net
         {
             public PackageKey(JObject obj)
             {
-                this.Group = (string)obj["group"];
+                this.Group = (string)obj["group"] ?? string.Empty;
                 this.Name = (string)obj["name"];
             }
             public PackageKey(string group, string name)
