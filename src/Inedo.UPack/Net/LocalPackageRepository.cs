@@ -12,7 +12,7 @@ namespace Inedo.UPack.Net
 {
     internal sealed class LocalPackageRepository
     {
-        private Lazy<ILookup<PackageKey, PackageFile>> allPackages;
+        private readonly Lazy<ILookup<PackageKey, PackageFile>> allPackages;
 
         public LocalPackageRepository(string rootPath)
         {
@@ -90,15 +90,6 @@ namespace Inedo.UPack.Net
             }
         }
 
-        private FileStream OpenPackageStream(string group, string name, string version)
-        {
-            var key = new PackageKey(group, name);
-            var package = this.allPackages.Value[key].FirstOrDefault(p => string.Equals((string)p.JObject["version"], version, StringComparison.OrdinalIgnoreCase));
-            if (package.IsNull)
-                return null;
-
-            return new FileStream(package.FileName, FileMode.Open, FileAccess.Read, FileShare.Read);
-        }
         private ILookup<PackageKey, PackageFile> ReadLocalPackages()
         {
             return readPackages()
