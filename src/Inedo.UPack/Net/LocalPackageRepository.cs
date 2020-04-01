@@ -56,14 +56,9 @@ namespace Inedo.UPack.Net
             var packageVersions = this.allPackages.Value[new PackageKey(id.Group, id.Name)];
             var match = default(PackageFile);
             if (version == null)
-            {
                 match = packageVersions.OrderByDescending(p => UniversalPackageVersion.Parse((string)p.JObject["version"])).FirstOrDefault();
-            }
             else
-            {
-                var s = version.ToString();
-                match = packageVersions.FirstOrDefault(p => string.Equals((string)p.JObject["version"], s, StringComparison.OrdinalIgnoreCase));
-            }
+                match = packageVersions.FirstOrDefault(p => UniversalPackageVersion.Parse((string)p.JObject["version"]) == version);
 
             if (match.IsNull)
                 return null;
