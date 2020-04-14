@@ -160,9 +160,10 @@ namespace Inedo.UPack.Packaging
         /// Extracts all items in the package to the specified target path.
         /// </summary>
         /// <param name="targetPath">Root path to extract items to.</param>
+        /// <param name="overwrite">Value indicating whether files in the target will be overwritten.</param>
         /// <param name="cancellationToken">Cancellation token/</param>
         /// <exception cref="ArgumentNullException"><paramref name="targetPath"/> is null or empty.</exception>
-        public Task ExtractAllItemsAsync(string targetPath, CancellationToken cancellationToken)
+        public Task ExtractAllItemsAsync(string targetPath, bool overwrite, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(targetPath))
                 throw new ArgumentNullException(nameof(targetPath));
@@ -171,9 +172,17 @@ namespace Inedo.UPack.Packaging
                 this.Entries,
                 e => e.RawPath,
                 targetPath,
+                overwrite,
                 cancellationToken
             );
         }
+        /// <summary>
+        /// Extracts all items in the package to the specified target path.
+        /// </summary>
+        /// <param name="targetPath">Root path to extract items to.</param>
+        /// <param name="cancellationToken">Cancellation token/</param>
+        /// <exception cref="ArgumentNullException"><paramref name="targetPath"/> is null or empty.</exception>
+        public Task ExtractAllItemsAsync(string targetPath, CancellationToken cancellationToken) => this.ExtractAllItemsAsync(targetPath, false, cancellationToken);
         /// <summary>
         /// Extracts all items in the package to the specified target path.
         /// </summary>
@@ -184,9 +193,10 @@ namespace Inedo.UPack.Packaging
         /// Extracts the content items in the package to the specified target path.
         /// </summary>
         /// <param name="targetPath">Root path to extract items to.</param>
+        /// <param name="overwrite">Value indicating whether files in the target will be overwritten.</param>
         /// <param name="cancellationToken">Cancellation token/</param>
         /// <exception cref="ArgumentNullException"><paramref name="targetPath"/> is null or empty.</exception>
-        public Task ExtractContentItemsAsync(string targetPath, CancellationToken cancellationToken)
+        public Task ExtractContentItemsAsync(string targetPath, bool overwrite, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(targetPath))
                 throw new ArgumentNullException(nameof(targetPath));
@@ -195,9 +205,17 @@ namespace Inedo.UPack.Packaging
                 this.Entries.Where(e => e.IsContent),
                 e => e.ContentPath,
                 targetPath,
+                overwrite,
                 cancellationToken
             );
         }
+        /// <summary>
+        /// Extracts the content items in the package to the specified target path.
+        /// </summary>
+        /// <param name="targetPath">Root path to extract items to.</param>
+        /// <param name="cancellationToken">Cancellation token/</param>
+        /// <exception cref="ArgumentNullException"><paramref name="targetPath"/> is null or empty.</exception>
+        public Task ExtractContentItemsAsync(string targetPath, CancellationToken cancellationToken) => this.ExtractContentItemsAsync(targetPath, false, cancellationToken);
         /// <summary>
         /// Extracts the content items in the package to the specified target path.
         /// </summary>
@@ -220,7 +238,7 @@ namespace Inedo.UPack.Packaging
             }
         }
 
-        private static async Task ExtractItemsInternalAsync(IEnumerable<UniversalPackageEntry> entries, Func<UniversalPackageEntry, string> getRelativePath, string targetPath, CancellationToken cancellationToken)
+        private static async Task ExtractItemsInternalAsync(IEnumerable<UniversalPackageEntry> entries, Func<UniversalPackageEntry, string> getRelativePath, string targetPath, bool overwrite, CancellationToken cancellationToken)
         {
             foreach (var entry in entries)
             {
@@ -240,7 +258,7 @@ namespace Inedo.UPack.Packaging
                         Directory.CreateDirectory(containingPath);
 
                     using (var entryStream = entry.Open())
-                    using (var destStream = new FileStream(destPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
+                    using (var destStream = new FileStream(destPath, overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
                     {
                         await entryStream.CopyToAsync(destStream, 81920, cancellationToken).ConfigureAwait(false);
                     }
