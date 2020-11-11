@@ -16,32 +16,32 @@ namespace Inedo.UPack.Net
     {
         internal RemoteUniversalPackage(JObject obj)
         {
-            var group = (string)obj["group"];
-            var name = (string)obj["name"];
+            var group = (string?)obj["group"];
+            var name = (string?)obj["name"];
             if (string.IsNullOrEmpty(name))
                 throw new FormatException("Missing \"name\" property.");
 
-            this.FullName = new UniversalPackageId(group, name);
+            this.FullName = new UniversalPackageId(group, name!);
 
-            var latestVersion = (string)obj["latestVersion"];
+            var latestVersion = (string?)obj["latestVersion"];
             if (string.IsNullOrEmpty(latestVersion))
                 throw new FormatException("Missing \"latestVersion\" property.");
 
-            this.LatestVersion = UniversalPackageVersion.Parse(latestVersion);
+            this.LatestVersion = UniversalPackageVersion.Parse(latestVersion!);
 
-            this.Title = (string)obj["title"];
-            this.Icon = (string)obj["icon"];
-            this.Description = (string)obj["description"];
+            this.Title = (string?)obj["title"];
+            this.Icon = (string?)obj["icon"];
+            this.Description = (string?)obj["description"];
             this.Downloads = (int?)obj["downloads"] ?? 0;
 
-            this.AllVersions = Array.AsReadOnly(((JArray)obj["versions"]).Select(t => UniversalPackageVersion.Parse((string)t)).ToArray());
-            this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>)obj.ToObject(typeof(Dictionary<string, object>)));
+            this.AllVersions = Array.AsReadOnly(((JArray?)obj["versions"])!.Select(t => UniversalPackageVersion.Parse((string?)t)).ToArray());
+            this.AllProperties = new ReadOnlyDictionary<string, object?>((IDictionary<string, object?>?)obj.ToObject(typeof(Dictionary<string, object?>)) ?? new Dictionary<string, object?>());
         }
 
         /// <summary>
         /// Gets the package group.
         /// </summary>
-        public string Group => this.FullName.Group;
+        public string? Group => this.FullName.Group;
         /// <summary>
         /// Gets the package name.
         /// </summary>
@@ -57,15 +57,15 @@ namespace Inedo.UPack.Net
         /// <summary>
         /// Gets the package title.
         /// </summary>
-        public string Title { get; }
+        public string? Title { get; }
         /// <summary>
         /// Gets the package icon URL.
         /// </summary>
-        public string Icon { get; }
+        public string? Icon { get; }
         /// <summary>
         /// Gets the package description.
         /// </summary>
-        public string Description { get; }
+        public string? Description { get; }
         /// <summary>
         /// Gets the number of downloads of all versions of the package.
         /// </summary>
@@ -77,7 +77,7 @@ namespace Inedo.UPack.Net
         /// <summary>
         /// Gets all of the raw metadata for the package.
         /// </summary>
-        public IReadOnlyDictionary<string, object> AllProperties { get; }
+        public IReadOnlyDictionary<string, object?> AllProperties { get; }
 
         /// <summary>
         /// Returns the package ID.

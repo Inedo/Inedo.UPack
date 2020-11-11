@@ -80,7 +80,7 @@ namespace Inedo.UPack.Packaging
                 int index = 0;
                 foreach (var d in this)
                 {
-                    if (d.Equals(item))
+                    if (d!.Equals(item))
                         return index;
                     index++;
                 }

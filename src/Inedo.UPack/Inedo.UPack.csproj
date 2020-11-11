@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net45;net46;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net45;net46;netcoreapp3.1;net5.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Title>UPackLib.NET</Title>
     <Authors>Inedo</Authors>
@@ -18,38 +18,22 @@
     <FileVersion>1.0.0.0</FileVersion>
     <Version>0.0.0</Version>
     <SignAssembly>true</SignAssembly>
-    <NoWarn>NU5105</NoWarn>
+    <NoWarn>NU5105;CS1591</NoWarn>
     <AssemblyOriginatorKeyFile>Inedo.UPack.snk</AssemblyOriginatorKeyFile>
     <PackageIcon>upack-icon.png</PackageIcon>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Debug|netstandard2.0'">
-    <DocumentationFile>bin\Debug\netstandard2.0\Inedo.UPack.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Release|netstandard2.0'">
-    <DocumentationFile>bin\Release\netstandard2.0\Inedo.UPack.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Debug|net45'">
-    <DocumentationFile>bin\Debug\net45\Inedo.UPack.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Release|net45'">
-    <DocumentationFile>bin\Release\net45\Inedo.UPack.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Debug|netcoreapp3.1'">
-    <DocumentationFile>bin\Debug\netcoreapp3.1\Inedo.UPack.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)'=='Release|netcoreapp3.1'">
-    <DocumentationFile>bin\Release\netcoreapp3.1\Inedo.UPack.xml</DocumentationFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net45'">
     <Reference Include="System.IO.Compression" />
-    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net46'">
     <Reference Include="System.IO.Compression" />
-    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="10.*" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
   <ItemGroup>
     <None Include="upack-icon.png">

@@ -27,7 +27,7 @@ namespace Inedo.UPack
         /// <param name="group">The group of the package.</param>
         /// <param name="name">The name of the package.</param>
         /// <exception cref="ArgumentException"><paramref name="group"/> is invalid or <paramref name="name"/> is invalid.</exception>
-        public UniversalPackageId(string group, string name)
+        public UniversalPackageId(string? group, string name)
         {
             if (!IsValidGroup(group))
                 throw new ArgumentException("Invalid group.");
@@ -38,15 +38,13 @@ namespace Inedo.UPack
             this.Name = name;
         }
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public static bool operator ==(UniversalPackageId a, UniversalPackageId b) => Equals(a, b);
-        public static bool operator !=(UniversalPackageId a, UniversalPackageId b) => !Equals(a, b);
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+        public static bool operator ==(UniversalPackageId? a, UniversalPackageId? b) => Equals(a, b);
+        public static bool operator !=(UniversalPackageId? a, UniversalPackageId? b) => !Equals(a, b);
 
         /// <summary>
         /// Gets the group part of the identifier.
         /// </summary>
-        public string Group { get; }
+        public string? Group { get; }
         /// <summary>
         /// Gets the name part of the identifier.
         /// </summary>
@@ -82,12 +80,12 @@ namespace Inedo.UPack
         /// </summary>
         /// <param name="s">String to test.</param>
         /// <returns>True if string can be used as a group; otherwise false.</returns>
-        public static bool IsValidGroup(string s)
+        public static bool IsValidGroup(string? s)
         {
             if (string.IsNullOrEmpty(s))
                 return true;
 
-            if (!GroupRegex.IsMatch(s) || s.Contains("//"))
+            if (!GroupRegex.IsMatch(s) || s!.Contains("//"))
                 return false;
 
             return true;
@@ -107,24 +105,23 @@ namespace Inedo.UPack
 
             return true;
         }
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public static bool Equals(UniversalPackageId a, UniversalPackageId b)
+        public static bool Equals(UniversalPackageId? a, UniversalPackageId? b)
         {
             if (ReferenceEquals(a, b))
                 return true;
-            if (ReferenceEquals(a, null) | ReferenceEquals(b, null))
+            if (a is null || b is null)
                 return false;
 
             return string.Equals(a.Group, b.Group, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
         }
-        public static int Compare(UniversalPackageId a, UniversalPackageId b)
+        public static int Compare(UniversalPackageId? a, UniversalPackageId? b)
         {
             if (ReferenceEquals(a, b))
                 return 0;
-            if (ReferenceEquals(a, null))
+            if (a is null)
                 return -1;
-            if (ReferenceEquals(b, null))
+            if (b is null)
                 return 1;
 
             int res = string.Compare(a.Group, b.Group, StringComparison.OrdinalIgnoreCase);
@@ -134,16 +131,15 @@ namespace Inedo.UPack
             return res;
         }
 
-        public bool Equals(UniversalPackageId other) => Equals(this, other);
-        public int CompareTo(UniversalPackageId other) => Compare(this, other);
-        public override bool Equals(object obj) => this.Equals(obj as UniversalPackageId);
+        public bool Equals(UniversalPackageId? other) => Equals(this, other);
+        public int CompareTo(UniversalPackageId? other) => Compare(this, other);
+        public override bool Equals(object? obj) => this.Equals(obj as UniversalPackageId);
         public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(this.Group ?? string.Empty) ^ StringComparer.OrdinalIgnoreCase.GetHashCode(this.Name);
         public override string ToString() => this.Group == null ? this.Name : (this.Group + "/" + this.Name);
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
-        int IComparable.CompareTo(object obj)
+        int IComparable.CompareTo(object? obj)
         {
-            if (!(obj is UniversalPackageId id))
+            if (obj is not UniversalPackageId id)
                 throw new ArgumentException("Object is not a " + nameof(UniversalPackageId));
 
             return this.CompareTo(id);

@@ -85,11 +85,11 @@ namespace Inedo.UPack.Net
         /// <summary>
         /// Gets the user name for basic authentication.
         /// </summary>
-        public string UserName { get; }
+        public string? UserName { get; }
         /// <summary>
         /// Gets the password for basic authentication.
         /// </summary>
-        public SecureString Password { get; }
+        public SecureString? Password { get; }
 
         internal bool IsLocalDirectory => string.Equals(this.Uri.Scheme, "file", StringComparison.OrdinalIgnoreCase);
 

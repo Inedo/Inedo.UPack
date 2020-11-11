@@ -7,14 +7,14 @@ namespace Inedo.UPack
 {
     internal static class AH
     {
-        public static string FormatName(string group, string name) => string.IsNullOrEmpty(group) ? name : (group + "/" + name);
-        public static string NullIf(string a, string b) => a != b ? a : null;
+        public static string FormatName(string? group, string name) => string.IsNullOrEmpty(group) ? name : (group + "/" + name);
+        public static string? NullIf(string? a, string? b) => a != b ? a : null;
         public static Task CompletedTask
         {
             get
             {
 #if NET45
-                return Task.FromResult<object>(null);
+                return Task.FromResult<object?>(null);
 #else
                 return Task.CompletedTask;
 #endif
@@ -27,7 +27,7 @@ namespace Inedo.UPack
         /// </summary>
         /// <param name="array">The array containing the data to hash.</param>
         /// <returns>The hash code.</returns>
-        public static int GetHashCode(byte[] array)
+        public static int GetHashCode(byte[]? array)
         {
             if (array == null || array.Length == 0)
                 return 0;
@@ -58,11 +58,11 @@ namespace Inedo.UPack
         /// <param name="array1">The first array.</param>
         /// <param name="array2">The second array.</param>
         /// <returns>True if arrays contain the same data; otherwise false.</returns>
-        public static bool Equals(byte[] array1, byte[] array2)
+        public static bool Equals(byte[]? array1, byte[]? array2)
         {
             if (ReferenceEquals(array1, array2))
                 return true;
-            if (ReferenceEquals(array1, null) | ReferenceEquals(array2, null))
+            if (array1 is null || array2 is null)
                 return false;
             if (array1.Length != array2.Length)
                 return false;
@@ -85,7 +85,7 @@ namespace Inedo.UPack
             return true;
         }
 
-        public static object CanonicalizeJsonToken(JToken token)
+        public static object? CanonicalizeJsonToken(JToken? token)
         {
             if (token is JValue v)
                 return v.ToString();

@@ -22,25 +22,25 @@ namespace Inedo.UPack.Net
 
         public string RootPath { get; }
 
-        public IEnumerable<RemoteUniversalPackage> ListPackages(string group)
+        public IEnumerable<RemoteUniversalPackage> ListPackages(string? group)
         {
             return this.allPackages.Value
                 .Where(g => group == null || string.Equals(g.Key.Group, group, StringComparison.OrdinalIgnoreCase))
                 .Select(g => new RemoteUniversalPackage(GetMungedPackage(g)));
         }
-        public IEnumerable<RemoteUniversalPackage> SearchPackages(string searchTerm)
+        public IEnumerable<RemoteUniversalPackage> SearchPackages(string? searchTerm)
         {
             return this.ListPackages(null)
                 .Where(p => isMatch(p.Name) || isMatch(p.Title) || isMatch(p.Description));
 
-            bool isMatch(string s)
+            bool isMatch(string? s)
             {
                 if (string.IsNullOrEmpty(searchTerm))
                     return true;
                 if (string.IsNullOrEmpty(s))
                     return false;
 
-                return s.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
+                return s!.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
             }
         }
         public IEnumerable<RemoteUniversalPackageVersion> ListPackageVersions(UniversalPackageId id)
@@ -48,29 +48,29 @@ namespace Inedo.UPack.Net
             return this.allPackages.Value[new PackageKey(id.Group, id.Name)]
                 .Select(p => new RemoteUniversalPackageVersion(p.JObject));
         }
-        public RemoteUniversalPackageVersion GetPackageVersion(UniversalPackageId id, UniversalPackageVersion version)
+        public RemoteUniversalPackageVersion? GetPackageVersion(UniversalPackageId id, UniversalPackageVersion version)
         {
             return this.ListPackageVersions(id)
                 .FirstOrDefault(p => p.Version == version);
         }
-        public Stream GetPackageStream(UniversalPackageId id, UniversalPackageVersion version)
+        public Stream? GetPackageStream(UniversalPackageId id, UniversalPackageVersion? version)
         {
             var packageVersions = this.allPackages.Value[new PackageKey(id.Group, id.Name)];
             var match = default(PackageFile);
             if (version == null)
-                match = packageVersions.OrderByDescending(p => UniversalPackageVersion.Parse((string)p.JObject["version"])).FirstOrDefault();
+                match = packageVersions.OrderByDescending(p => UniversalPackageVersion.Parse((string?)p.JObject["version"])).FirstOrDefault();
             else
-                match = packageVersions.FirstOrDefault(p => UniversalPackageVersion.Parse((string)p.JObject["version"]) == version);
+                match = packageVersions.FirstOrDefault(p => UniversalPackageVersion.Parse((string?)p.JObject["version"]) == version);
 
             if (match.IsNull)
                 return null;
 
             return new FileStream(match.FileName, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
-        public Stream GetPackageFileStream(UniversalPackageId id, UniversalPackageVersion version, string filePath)
+        public Stream? GetPackageFileStream(UniversalPackageId id, UniversalPackageVersion? version, string filePath)
         {
-            Stream packageStream = null;
-            ZipArchive zip = null;
+            Stream? packageStream = null;
+            ZipArchive? zip = null;
             try
             {
                 packageStream = this.GetPackageStream(id, version);
@@ -108,13 +108,11 @@ namespace Inedo.UPack.Net
                         if (upackEntry == null)
                             continue;
 
-                        using (var upackStream = upackEntry.Open())
-                        using (var jsonReader = new JsonTextReader(new StreamReader(upackStream, AH.UTF8)))
-                        {
-                            obj = JObject.Load(jsonReader);
-                            obj["published"] = new DateTimeOffset(File.GetCreationTime(fileName));
-                            obj["size"] = new FileInfo(fileName).Length;
-                        }
+                        using var upackStream = upackEntry.Open();
+                        using var jsonReader = new JsonTextReader(new StreamReader(upackStream, AH.UTF8));
+                        obj = JObject.Load(jsonReader);
+                        obj["published"] = new DateTimeOffset(File.GetCreationTime(fileName));
+                        obj["size"] = new FileInfo(fileName).Length;
                     }
 
                     yield return new PackageFile(fileName, obj);
@@ -125,14 +123,14 @@ namespace Inedo.UPack.Net
         private static JObject GetMungedPackage(IEnumerable<PackageFile> packageVersions)
         {
             var sorted = (from p in packageVersions
-                          let v = UniversalPackageVersion.Parse((string)p.JObject["version"])
+                          let v = UniversalPackageVersion.Parse((string?)p.JObject["version"])
                           orderby v descending
                           select p).ToList();
 
             var latest = (JObject)sorted.First().JObject.DeepClone();
             latest["latestVersion"] = latest["version"];
             latest.Remove("version");
-            latest["versions"] = new JArray(sorted.Select(v => (string)v.JObject["version"]));
+            latest["versions"] = new JArray(sorted.Select(v => (string?)v.JObject["version"]));
             return latest;
         }
 
@@ -140,10 +138,10 @@ namespace Inedo.UPack.Net
         {
             public PackageKey(JObject obj)
             {
-                this.Group = (string)obj["group"] ?? string.Empty;
-                this.Name = (string)obj["name"];
+                this.Group = (string?)obj["group"] ?? string.Empty;
+                this.Name = (string?)obj["name"] ?? string.Empty;
             }
-            public PackageKey(string group, string name)
+            public PackageKey(string? group, string name)
             {
                 this.Group = group ?? string.Empty;
                 this.Name = name;
@@ -153,7 +151,7 @@ namespace Inedo.UPack.Net
             public string Name { get; }
 
             public bool Equals(PackageKey other) => string.Equals(this.Group, other.Group, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
-            public override bool Equals(object obj) => obj is PackageKey key ? this.Equals(key) : false;
+            public override bool Equals(object? obj) => obj is PackageKey key && this.Equals(key);
             public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(this.Name);
         }
 

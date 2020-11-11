@@ -7,7 +7,7 @@ namespace Inedo.UPack.Net
     /// </summary>
     public sealed class ApiRequest
     {
-        internal ApiRequest(UniversalFeedEndpoint endpoint, string relativeUrl, string method = "GET", string contentType = null, Stream requestBody = null)
+        internal ApiRequest(UniversalFeedEndpoint endpoint, string relativeUrl, string method = "GET", string? contentType = null, Stream? requestBody = null)
         {
             this.RelativeUrl = relativeUrl;
             this.Method = method;
@@ -27,11 +27,11 @@ namespace Inedo.UPack.Net
         /// <summary>
         /// Gets the Content-Type of the data supplied in the <see cref="RequestBody"/> stream.
         /// </summary>
-        public string ContentType { get; }
+        public string? ContentType { get; }
         /// <summary>
         /// Gets the data to write to the request body. May be null.
         /// </summary>
-        public Stream RequestBody { get; }
+        public Stream? RequestBody { get; }
         /// <summary>
         /// Gets the feed API endpoint information.
         /// </summary>

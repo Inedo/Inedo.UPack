@@ -32,7 +32,7 @@ namespace Inedo.UPack.Packaging
                 {
                     var list = new List<UniversalPackageDependency>(a.Length + 1);
                     foreach (var item in a)
-                        list.Add(UniversalPackageDependency.Parse((string)item));
+                        list.Add(UniversalPackageDependency.Parse((string?)item));
 
                     return list;
                 }
@@ -47,7 +47,7 @@ namespace Inedo.UPack.Packaging
                     return;
                 }
 
-                if (list.Count == 1)
+                if (list!.Count == 1)
                     this.Owner[this.PropertyName] = list[0].ToString();
 
                 this.Owner[this.PropertyName] = list.Select(d => d.ToString()).ToArray();

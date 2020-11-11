@@ -16,7 +16,7 @@ namespace Inedo.UPack.Net
     public sealed class UniversalFeedClient
     {
         private readonly ApiTransport transport;
-        private Lazy<LocalPackageRepository> localRepository;
+        private readonly Lazy<LocalPackageRepository> localRepository;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalFeedClient"/> class.
@@ -43,7 +43,7 @@ namespace Inedo.UPack.Net
         /// <param name="endpoint">Connection information for the remote endpoint.</param>
         /// <param name="transport">Transport layer to use for requests. The default is <see cref="DefaultApiTransport"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="endpoint"/> is null.</exception>
-        public UniversalFeedClient(UniversalFeedEndpoint endpoint, ApiTransport transport)
+        public UniversalFeedClient(UniversalFeedEndpoint endpoint, ApiTransport? transport)
         {
             this.Endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
             this.transport = transport ?? new DefaultApiTransport();
@@ -69,7 +69,7 @@ namespace Inedo.UPack.Net
         /// <param name="group">Group of packages to return. Null indicates all packages are desired.</param>
         /// <param name="maxCount">Maximum number of packages to return. Null indicates no limit.</param>
         /// <returns>List of packages in the specified group.</returns>
-        public Task<IReadOnlyList<RemoteUniversalPackage>> ListPackagesAsync(string group, int? maxCount) => this.ListPackagesAsync(group, maxCount, default);
+        public Task<IReadOnlyList<RemoteUniversalPackage>> ListPackagesAsync(string? group, int? maxCount) => this.ListPackagesAsync(group, maxCount, default);
         /// <summary>
         /// Returns a list of packages with the specified group.
         /// </summary>
@@ -77,7 +77,7 @@ namespace Inedo.UPack.Net
         /// <param name="maxCount">Maximum number of packages to return. Null indicates no limit.</param>
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <returns>List of packages in the specified group.</returns>
-        public async Task<IReadOnlyList<RemoteUniversalPackage>> ListPackagesAsync(string group, int? maxCount, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<RemoteUniversalPackage>> ListPackagesAsync(string? group, int? maxCount, CancellationToken cancellationToken)
         {
             if (this.Endpoint.IsLocalDirectory)
                 return this.localRepository.Value.ListPackages(group).ToList();
@@ -85,29 +85,25 @@ namespace Inedo.UPack.Net
             var url = FormatUrl("packages", ("group", group), ("count", maxCount));
 
             var request = new ApiRequest(this.Endpoint, url);
-            using (var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false))
+            using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
+            if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
+                throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
+
+            using var responseStream = response.GetResponseStream();
+            using var reader = new StreamReader(responseStream, Encoding.UTF8);
+            using var jsonReader = new JsonTextReader(reader);
+            var arr = await JArray.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
+            var results = new List<RemoteUniversalPackage>(arr.Count);
+
+            foreach (var token in arr)
             {
-                if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
-                    throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
+                if (token is not JObject obj)
+                    throw new InvalidDataException("Unexpected token in JSON array.");
 
-                using (var responseStream = response.GetResponseStream())
-                using (var reader = new StreamReader(responseStream, Encoding.UTF8))
-                using (var jsonReader = new JsonTextReader(reader))
-                {
-                    var arr = await JArray.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
-                    var results = new List<RemoteUniversalPackage>(arr.Count);
-
-                    foreach (var token in arr)
-                    {
-                        if (!(token is JObject obj))
-                            throw new InvalidDataException("Unexpected token in JSON array.");
-
-                        results.Add(new RemoteUniversalPackage(obj));
-                    }
-
-                    return results.AsReadOnly();
-                }
+                results.Add(new RemoteUniversalPackage(obj));
             }
+
+            return results.AsReadOnly();
         }
 
         /// <summary>
@@ -115,14 +111,14 @@ namespace Inedo.UPack.Net
         /// </summary>
         /// <param name="searchTerm">Text to search package metadata for.</param>
         /// <returns>List of packages that match the specified search term.</returns>
-        public Task<IReadOnlyList<RemoteUniversalPackage>> SearchPackagesAsync(string searchTerm) => this.SearchPackagesAsync(searchTerm, default);
+        public Task<IReadOnlyList<RemoteUniversalPackage>> SearchPackagesAsync(string? searchTerm) => this.SearchPackagesAsync(searchTerm, default);
         /// <summary>
         /// Returns a list of packages that contain the specified search term.
         /// </summary>
         /// <param name="searchTerm">Text to search package metadata for.</param>
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <returns>List of packages that match the specified search term.</returns>
-        public async Task<IReadOnlyList<RemoteUniversalPackage>> SearchPackagesAsync(string searchTerm, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<RemoteUniversalPackage>> SearchPackagesAsync(string? searchTerm, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(searchTerm))
                 return await this.ListPackagesAsync(null, null, cancellationToken).ConfigureAwait(false);
@@ -133,29 +129,25 @@ namespace Inedo.UPack.Net
             var url = FormatUrl("search", ("term", searchTerm));
 
             var request = new ApiRequest(this.Endpoint, url);
-            using (var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false))
+            using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
+            if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
+                throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
+
+            using var responseStream = response.GetResponseStream();
+            using var reader = new StreamReader(responseStream, Encoding.UTF8);
+            using var jsonReader = new JsonTextReader(reader);
+            var arr = await JArray.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
+            var results = new List<RemoteUniversalPackage>(arr.Count);
+
+            foreach (var token in arr)
             {
-                if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
-                    throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
+                if (token is not JObject obj)
+                    throw new InvalidDataException("Unexpected token in JSON array.");
 
-                using (var responseStream = response.GetResponseStream())
-                using (var reader = new StreamReader(responseStream, Encoding.UTF8))
-                using (var jsonReader = new JsonTextReader(reader))
-                {
-                    var arr = await JArray.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
-                    var results = new List<RemoteUniversalPackage>(arr.Count);
-
-                    foreach (var token in arr)
-                    {
-                        if (!(token is JObject obj))
-                            throw new InvalidDataException("Unexpected token in JSON array.");
-
-                        results.Add(new RemoteUniversalPackage(obj));
-                    }
-
-                    return results.AsReadOnly();
-                }
+                results.Add(new RemoteUniversalPackage(obj));
             }
+
+            return results.AsReadOnly();
         }
 
         /// <summary>
@@ -200,7 +192,7 @@ namespace Inedo.UPack.Net
         /// <param name="version">Version of the package.</param>
         /// <exception cref="ArgumentNullException"><paramref name="id"/> is null or <paramref name="version"/> is null.</exception>
         /// <returns>Package vesion metadata if it was found; otherwise null.</returns>
-        public Task<RemoteUniversalPackageVersion> GetPackageVersionAsync(UniversalPackageId id, UniversalPackageVersion version) => this.GetPackageVersionAsync(id, version, false, default);
+        public Task<RemoteUniversalPackageVersion?> GetPackageVersionAsync(UniversalPackageId id, UniversalPackageVersion version) => this.GetPackageVersionAsync(id, version, false, default);
         /// <summary>
         /// Returns metadata for a specific version of a package, or null if the package was not found.
         /// </summary>
@@ -209,7 +201,7 @@ namespace Inedo.UPack.Net
         /// <param name="includeFileList">Value indicating whether a list of files inside the package should be included. This will incur additional overhead.</param>
         /// <exception cref="ArgumentNullException"><paramref name="id"/> is null or <paramref name="version"/> is null.</exception>
         /// <returns>Package vesion metadata if it was found; otherwise null.</returns>
-        public Task<RemoteUniversalPackageVersion> GetPackageVersionAsync(UniversalPackageId id, UniversalPackageVersion version, bool includeFileList) => this.GetPackageVersionAsync(id, version, includeFileList, default);
+        public Task<RemoteUniversalPackageVersion?> GetPackageVersionAsync(UniversalPackageId id, UniversalPackageVersion version, bool includeFileList) => this.GetPackageVersionAsync(id, version, includeFileList, default);
         /// <summary>
         /// Returns metadata for a specific version of a package, or null if the package was not found.
         /// </summary>
@@ -219,7 +211,7 @@ namespace Inedo.UPack.Net
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <exception cref="ArgumentNullException"><paramref name="id"/> is null or <paramref name="version"/> is null.</exception>
         /// <returns>Package vesion metadata if it was found; otherwise null.</returns>
-        public async Task<RemoteUniversalPackageVersion> GetPackageVersionAsync(UniversalPackageId id, UniversalPackageVersion version, bool includeFileList, CancellationToken cancellationToken)
+        public async Task<RemoteUniversalPackageVersion?> GetPackageVersionAsync(UniversalPackageId id, UniversalPackageVersion version, bool includeFileList, CancellationToken cancellationToken)
         {
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
@@ -241,7 +233,7 @@ namespace Inedo.UPack.Net
         /// The stream returned by this method is not buffered at all. If random access is required, the caller must
         /// first copy it to another stream.
         /// </remarks>
-        public Task<Stream> GetPackageStreamAsync(UniversalPackageId id, UniversalPackageVersion version) => this.GetPackageStreamAsync(id, version, default);
+        public Task<Stream?> GetPackageStreamAsync(UniversalPackageId id, UniversalPackageVersion? version) => this.GetPackageStreamAsync(id, version, default);
         /// <summary>
         /// Returns a stream containing the specified package if it is available; otherwise null.
         /// </summary>
@@ -254,7 +246,7 @@ namespace Inedo.UPack.Net
         /// The stream returned by this method is not buffered at all. If random access is required, the caller must
         /// first copy it to another stream.
         /// </remarks>
-        public async Task<Stream> GetPackageStreamAsync(UniversalPackageId id, UniversalPackageVersion version, CancellationToken cancellationToken)
+        public async Task<Stream?> GetPackageStreamAsync(UniversalPackageId id, UniversalPackageVersion? version, CancellationToken cancellationToken)
         {
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
@@ -293,7 +285,7 @@ namespace Inedo.UPack.Net
         /// The stream returned by this method is not buffered at all. If random access is required, the caller must
         /// first copy it to another stream.
         /// </remarks>
-        public Task<Stream> GetPackageFileStreamAsync(UniversalPackageId id, UniversalPackageVersion version, string filePath) => this.GetPackageFileStreamAsync(id, version, filePath, default);
+        public Task<Stream?> GetPackageFileStreamAsync(UniversalPackageId id, UniversalPackageVersion? version, string filePath) => this.GetPackageFileStreamAsync(id, version, filePath, default);
         /// <summary>
         /// Returns a stream containing the file at the specified path in the specified package if it is available; otherwise null.
         /// </summary>
@@ -307,7 +299,7 @@ namespace Inedo.UPack.Net
         /// The stream returned by this method is not buffered at all. If random access is required, the caller must
         /// first copy it to another stream.
         /// </remarks>
-        public async Task<Stream> GetPackageFileStreamAsync(UniversalPackageId id, UniversalPackageVersion version, string filePath, CancellationToken cancellationToken)
+        public async Task<Stream?> GetPackageFileStreamAsync(UniversalPackageId id, UniversalPackageVersion? version, string filePath, CancellationToken cancellationToken)
         {
             if (id == null)
                 throw new ArgumentNullException(nameof(id));
@@ -356,12 +348,8 @@ namespace Inedo.UPack.Net
             if (this.Endpoint.IsLocalDirectory)
                 throw new NotSupportedException();
 
-
             var request = new ApiRequest(this.Endpoint, "upload", method: "PUT", contentType: "application/zip", requestBody: stream);
-
-            using (var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false))
-            {
-            }
+            using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -391,12 +379,10 @@ namespace Inedo.UPack.Net
             var url = "delete/" + Uri.EscapeUriString(id.ToString()) + "/" + Uri.EscapeUriString(version.ToString());
             var request = new ApiRequest(this.Endpoint, url, method: "DELETE");
 
-            using (var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false))
-            {
-            }
+            using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<IReadOnlyList<RemoteUniversalPackageVersion>> ListVersionsInternalAsync(UniversalPackageId id, UniversalPackageVersion version, bool includeFileList, int? maxCount, CancellationToken cancellationToken)
+        private async Task<IReadOnlyList<RemoteUniversalPackageVersion>> ListVersionsInternalAsync(UniversalPackageId id, UniversalPackageVersion? version, bool includeFileList, int? maxCount, CancellationToken cancellationToken)
         {
             if (this.Endpoint.IsLocalDirectory)
             {
@@ -413,40 +399,36 @@ namespace Inedo.UPack.Net
 
             var url = FormatUrl("versions", ("group", id?.Group), ("name", id?.Name), ("version", version?.ToString()), ("includeFileList", includeFileList), ("count", maxCount));
             var request = new ApiRequest(this.Endpoint, url);
-            using (var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false))
+            using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
+            if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
+                throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
+
+            using var responseStream = response.GetResponseStream();
+            using var reader = new StreamReader(responseStream, AH.UTF8);
+            using var jsonReader = new JsonTextReader(reader);
+            if (version == null)
             {
-                if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
-                    throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
+                var arr = await JArray.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
+                var results = new List<RemoteUniversalPackageVersion>(arr.Count);
 
-                using (var responseStream = response.GetResponseStream())
-                using (var reader = new StreamReader(responseStream, AH.UTF8))
-                using (var jsonReader = new JsonTextReader(reader))
+                foreach (var token in arr)
                 {
-                    if (version == null)
-                    {
-                        var arr = await JArray.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
-                        var results = new List<RemoteUniversalPackageVersion>(arr.Count);
+                    if (token is not JObject obj)
+                        throw new InvalidDataException("Unexpected token in JSON array.");
 
-                        foreach (var token in arr)
-                        {
-                            if (!(token is JObject obj))
-                                throw new InvalidDataException("Unexpected token in JSON array.");
-
-                            results.Add(new RemoteUniversalPackageVersion(obj));
-                        }
-
-                        return results.AsReadOnly();
-                    }
-                    else
-                    {
-                        var obj = await JObject.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
-                        return new[] { new RemoteUniversalPackageVersion(obj) };
-                    }
+                    results.Add(new RemoteUniversalPackageVersion(obj));
                 }
+
+                return results.AsReadOnly();
+            }
+            else
+            {
+                var obj = await JObject.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
+                return new[] { new RemoteUniversalPackageVersion(obj) };
             }
         }
 
-        private static string FormatUrl(string url, params (string key, object value)[] query)
+        private static string FormatUrl(string url, params (string key, object? value)[] query)
         {
             if (query.Length == 0)
                 return url;
@@ -455,7 +437,7 @@ namespace Inedo.UPack.Net
             if (items.Count == 0)
                 return url;
 
-            return url + "?" + string.Join("&", items.Select(i => Uri.EscapeDataString(i.key) + "=" + Uri.EscapeDataString(i.value.ToString())));
+            return url + "?" + string.Join("&", items.Select(i => Uri.EscapeDataString(i.key) + "=" + Uri.EscapeDataString(i.value!.ToString()!)));
         }
     }
 }

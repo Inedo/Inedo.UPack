@@ -24,10 +24,8 @@ namespace Inedo.UPack
             this.bytes = bytes;
         }
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public static bool operator ==(HexString s1, HexString s2) => Equals(s1, s2);
         public static bool operator !=(HexString s1, HexString s2) => !Equals(s1, s2);
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
         /// <summary>
         /// Converts the specified string to a <see cref="HexString"/> instance.
@@ -52,12 +50,10 @@ namespace Inedo.UPack
             return new HexString(bytes);
         }
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public static bool Equals(HexString s1, HexString s2) => AH.Equals(s1.bytes, s2.bytes);
         public bool Equals(HexString other) => Equals(this, other);
-        public override bool Equals(object obj) => obj is HexString h ? this.Equals(h) : false;
+        public override bool Equals(object? obj) => obj is HexString h && this.Equals(h);
         public override int GetHashCode() => AH.GetHashCode(this.bytes);
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         /// <summary>
         /// Returns a hexadecimal string representation of the binary value.
         /// </summary>

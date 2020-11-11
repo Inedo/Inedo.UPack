@@ -19,7 +19,6 @@ namespace Inedo.UPack.Net
         /// <exception cref="ArgumentNullException"><paramref name="response"/> is null.</exception>
         public DefaultApiResponse(HttpWebResponse response) => this.response = response ?? throw new ArgumentNullException(nameof(response));
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public override string ContentType => this.response.ContentType;
 
         public override Stream GetResponseStream() => this.response.GetResponseStream();
@@ -31,6 +30,5 @@ namespace Inedo.UPack.Net
 
             base.Dispose(disposing);
         }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

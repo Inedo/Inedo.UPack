@@ -91,10 +91,8 @@ namespace Inedo.UPack.Packaging
             var p = path.Replace('\\', '/').Trim('/');
             var entry = this.zip.CreateEntry(p, compressionLevel);
             entry.LastWriteTime = timestamp;
-            using (var entryStream = entry.Open())
-            {
-                await stream.CopyToAsync(entryStream, 81920, cancellationToken).ConfigureAwait(false);
-            }
+            using var entryStream = entry.Open();
+            await stream.CopyToAsync(entryStream, 81920, cancellationToken).ConfigureAwait(false);
         }
         /// <summary>
         /// Copies the data in the specified stream to the package using the specified content path (relative to package directory) and timestamp.
@@ -172,7 +170,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="shouldInclude">Method invoked for each file to determine if it should be added to the package. The full source path is the argument supplied to the method.</param>
         /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
-        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude) => this.AddContentsAsync(sourcePath, targetPath, recursive, shouldInclude, new CancellationToken());
+        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string>? shouldInclude) => this.AddContentsAsync(sourcePath, targetPath, recursive, shouldInclude, new CancellationToken());
         /// <summary>
         /// Adds the files and directories from the specified source path to the specified target path in the package.
         /// </summary>
@@ -183,7 +181,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
-        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, CancellationToken cancellationToken) => this.AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileAsync, this.AddEmptyDirectory, cancellationToken);
+        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string>? shouldInclude, CancellationToken cancellationToken) => AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileAsync, this.AddEmptyDirectory, cancellationToken);
 
         /// <summary>
         /// Adds the files and directories from the specified source path to the specified raw target path in the package.
@@ -203,7 +201,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="shouldInclude">Method invoked for each file to determine if it should be added to the package. The full source path is the argument supplied to the method.</param>
         /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
-        public Task AddRawContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude) => this.AddRawContentsAsync(sourcePath, targetPath, recursive, shouldInclude, new CancellationToken());
+        public Task AddRawContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string>? shouldInclude) => this.AddRawContentsAsync(sourcePath, targetPath, recursive, shouldInclude, new CancellationToken());
         /// <summary>
         /// Adds the files and directories from the specified source path to the specified raw target path in the package.
         /// </summary>
@@ -214,7 +212,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
-        public Task AddRawContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, CancellationToken cancellationToken) => this.AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileRawAsync, this.AddEmptyDirectoryRaw, cancellationToken);
+        public Task AddRawContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string>? shouldInclude, CancellationToken cancellationToken) => AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileRawAsync, this.AddEmptyDirectoryRaw, cancellationToken);
 
         private static Stream CreateFile(string fileName)
         {
@@ -226,14 +224,12 @@ namespace Inedo.UPack.Packaging
         private void WriteMetadata(UniversalPackageMetadata metadata)
         {
             var entry = this.zip.CreateEntry("upack.json");
-            using (var entryStream = entry.Open())
-            using (var writer = new StreamWriter(entryStream, new UTF8Encoding(false)))
-            using (var jsonWriter = new JsonTextWriter(writer) { Formatting = Formatting.Indented })
-            {
-                metadata.WriteJson(jsonWriter);
-            }
+            using var entryStream = entry.Open();
+            using var writer = new StreamWriter(entryStream, new UTF8Encoding(false));
+            using var jsonWriter = new JsonTextWriter(writer) { Formatting = Formatting.Indented };
+            metadata.WriteJson(jsonWriter);
         }
-        private async Task AddContentsInternalAsync(string sourcePath, string targetPath, bool recursive, Predicate<string> shouldInclude, Func<Stream, string, DateTimeOffset, CancellationToken, Task> add, Action<string> addEmptyDir, CancellationToken cancellationToken)
+        private static async Task AddContentsInternalAsync(string sourcePath, string targetPath, bool recursive, Predicate<string>? shouldInclude, Func<Stream, string, DateTimeOffset, CancellationToken, Task> add, Action<string> addEmptyDir, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(sourcePath))
                 throw new ArgumentNullException(nameof(sourcePath));
@@ -253,15 +249,13 @@ namespace Inedo.UPack.Packaging
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                using (var sourceStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
-                {
-                    var itemPath = getFullTargetPath(sourceFileName);
-                    var pathParts = itemPath.Split('/');
-                    for (int i = 1; i < pathParts.Length; i++)
-                        addedDirs.Add(string.Join("/", pathParts.Take(i)));
+                using var sourceStream = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+                var itemPath = getFullTargetPath(sourceFileName);
+                var pathParts = itemPath.Split('/');
+                for (int i = 1; i < pathParts.Length; i++)
+                    addedDirs.Add(string.Join("/", pathParts.Take(i)));
 
-                    await add(sourceStream, itemPath, File.GetLastWriteTimeUtc(sourceFileName), cancellationToken).ConfigureAwait(false);
-                }
+                await add(sourceStream, itemPath, File.GetLastWriteTimeUtc(sourceFileName), cancellationToken).ConfigureAwait(false);
             }
 
             // don't ever add any subdirectories if not in recursive mode

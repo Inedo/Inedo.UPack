@@ -27,7 +27,7 @@ namespace Inedo.UPack.Packaging
                     return new List<string>(1) { s };
 
                 if (inst is Array a)
-                    return new List<string>(a.Cast<object>().Select(i => i?.ToString()));
+                    return new List<string>(a.Cast<object>().Select(i => i?.ToString()!));
 
                 return new List<string>();
             }
@@ -39,7 +39,7 @@ namespace Inedo.UPack.Packaging
                     return;
                 }
 
-                this.Owner[this.PropertyName] = list.ToArray();
+                this.Owner[this.PropertyName] = list!.ToArray();
             }
         }
     }

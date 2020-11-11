@@ -24,11 +24,9 @@ namespace Inedo.UPack.Net
         /// <summary>
         /// Gets or sets the User Agent string to use when making requests.
         /// </summary>
-        public string UserAgent { get; set; }
+        public string? UserAgent { get; set; }
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public override async Task<ApiResponse> GetResponseAsync(ApiRequest request, CancellationToken cancellationToken)
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -47,10 +45,8 @@ namespace Inedo.UPack.Net
                     webRequest.ContentLength = request.RequestBody.Length - request.RequestBody.Position;
                 }
 
-                using (var requestStream = await webRequest.GetRequestStreamAsync().ConfigureAwait(false))
-                {
-                    await request.RequestBody.CopyToAsync(requestStream, 81920, cancellationToken).ConfigureAwait(false);
-                }
+                using var requestStream = await webRequest.GetRequestStreamAsync().ConfigureAwait(false);
+                await request.RequestBody.CopyToAsync(requestStream, 81920, cancellationToken).ConfigureAwait(false);
             }
 
             var webResponse = await webRequest.GetResponseAsync(cancellationToken).ConfigureAwait(false);
@@ -79,7 +75,7 @@ namespace Inedo.UPack.Net
             if (r.Endpoint.UseDefaultCredentials)
                 request.UseDefaultCredentials = true;
             else if (!string.IsNullOrEmpty(r.Endpoint.UserName) && r.Endpoint.Password != null)
-                request.Headers.Add(HttpRequestHeader.Authorization, "Basic " + GetBasicAuthToken(r.Endpoint.UserName, r.Endpoint.Password));
+                request.Headers.Add(HttpRequestHeader.Authorization, "Basic " + GetBasicAuthToken(r.Endpoint.UserName!, r.Endpoint.Password));
 
             return request;
         }

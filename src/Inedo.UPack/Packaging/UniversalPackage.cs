@@ -73,19 +73,19 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Gets the group of the package.
         /// </summary>
-        public string Group => this.metadata.Group;
+        public string? Group => this.metadata.Group;
         /// <summary>
         /// Gets the name of the package.
         /// </summary>
-        public string Name => this.metadata.Name;
+        public string? Name => this.metadata.Name;
         /// <summary>
         /// Gets the version of the package.
         /// </summary>
-        public UniversalPackageVersion Version => this.metadata.Version;
+        public UniversalPackageVersion? Version => this.metadata.Version;
         /// <summary>
         /// Gets the package short description (summary).
         /// </summary>
-        public string ShortDescription => this.metadata.ShortDescription;
+        public string? ShortDescription => this.metadata.ShortDescription;
         /// <summary>
         /// Gets the entries contained in the package.
         /// </summary>
@@ -115,7 +115,7 @@ namespace Inedo.UPack.Packaging
                 return new UniversalPackageEntry(zipEntry);
 
             // if not exact match, iterate through everything
-            List<UniversalPackageEntry> maybeMatches = null;
+            List<UniversalPackageEntry>? maybeMatches = null;
             foreach (var entry in this.Entries)
             {
                 // if casing matches exactly, return this one
@@ -193,7 +193,7 @@ namespace Inedo.UPack.Packaging
 
             return ExtractItemsInternalAsync(
                 this.Entries.Where(e => e.IsContent),
-                e => e.ContentPath,
+                e => e.ContentPath!,
                 targetPath,
                 cancellationToken
             );
@@ -211,13 +211,11 @@ namespace Inedo.UPack.Packaging
             if (entry == null)
                 throw new InvalidDataException("upack.json not found in package.");
 
-            using (var stream = entry.Open())
-            using (var reader = new StreamReader(stream, Encoding.UTF8))
-            using (var json = new JsonTextReader(reader))
-            {
-                var obj = JObject.Load(json);
-                return new UniversalPackageMetadata(obj);
-            }
+            using var stream = entry.Open();
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            using var json = new JsonTextReader(reader);
+            var obj = JObject.Load(json);
+            return new UniversalPackageMetadata(obj);
         }
 
         private static async Task ExtractItemsInternalAsync(IEnumerable<UniversalPackageEntry> entries, Func<UniversalPackageEntry, string> getRelativePath, string targetPath, CancellationToken cancellationToken)

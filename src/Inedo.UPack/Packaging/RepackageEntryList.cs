@@ -46,7 +46,7 @@ namespace Inedo.UPack.Packaging
                                 }
                             );
 
-                            string getString(string key)
+                            string? getString(string key)
                             {
                                 if (d.TryGetValue(key, out var o) && o is string s2)
                                     return s2;
@@ -77,23 +77,23 @@ namespace Inedo.UPack.Packaging
                     return;
                 }
 
-                this.Owner[this.PropertyName] = list.Select(getItem).ToArray();
+                this.Owner[this.PropertyName] = list!.Select(getItem).ToArray();
 
-                object getItem(RepackageHistoryEntry entry)
+                static object getItem(RepackageHistoryEntry entry)
                 {
                     var dict = new Dictionary<string, object>();
                     if (!string.IsNullOrEmpty(entry.Id))
-                        dict["id"] = entry.Id;
+                        dict["id"] = entry.Id!;
                     if (entry.Date != null)
-                        dict["date"] = entry.Date?.ToString("o");
+                        dict["date"] = entry.Date?.ToString("o")!;
                     if (!string.IsNullOrEmpty(entry.Reason))
-                        dict["reason"] = entry.Reason;
+                        dict["reason"] = entry.Reason!;
                     if (!string.IsNullOrEmpty(entry.Using))
-                        dict["using"] = entry.Using;
+                        dict["using"] = entry.Using!;
                     if (!string.IsNullOrEmpty(entry.By))
-                        dict["by"] = entry.By;
+                        dict["by"] = entry.By!;
                     if (!string.IsNullOrEmpty(entry.Url))
-                        dict["url"] = entry.Url;
+                        dict["url"] = entry.Url!;
 
                     if (dict.Count == 1 && dict.ContainsKey("id"))
                         return dict["id"];

@@ -16,11 +16,11 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Gets the full path relative to the package archive root. This includes metadata files as well as package content.
         /// </summary>
-        public string RawPath => this.zipEntry?.FullName.Replace('\\', '/');
+        public string RawPath => this.zipEntry?.FullName.Replace('\\', '/')!;
         /// <summary>
         /// Gets the path relative to the package content root. This includes only content files and returns null for metadata files.
         /// </summary>
-        public string ContentPath
+        public string? ContentPath
         {
             get
             {

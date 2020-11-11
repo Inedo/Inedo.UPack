@@ -12,35 +12,35 @@ namespace Inedo.UPack.Net
     {
         internal RemoteUniversalPackageVersion(JObject obj)
         {
-            var group = (string)obj["group"];
-            var name = (string)obj["name"];
+            var group = (string?)obj["group"];
+            var name = (string?)obj["name"];
             if (string.IsNullOrEmpty(name))
                 throw new FormatException("Missing \"name\" property.");
 
-            this.FullName = new UniversalPackageId(group, name);
+            this.FullName = new UniversalPackageId(group, name!);
 
-            var version = (string)obj["version"];
+            var version = (string?)obj["version"];
             if (string.IsNullOrEmpty(version))
                 throw new FormatException("Missing \"version\" property.");
 
-            this.Version = UniversalPackageVersion.Parse(version);
-            this.Title = (string)obj["title"];
-            this.Icon = (string)obj["icon"];
-            this.Description = (string)obj["description"];
+            this.Version = UniversalPackageVersion.Parse(version!);
+            this.Title = (string?)obj["title"];
+            this.Icon = (string?)obj["icon"];
+            this.Description = (string?)obj["description"];
             this.Size = (long?)obj["size"] ?? 0;
-            this.PublishedDate = (DateTimeOffset)obj["published"];
+            this.PublishedDate = (DateTimeOffset?)obj["published"] ?? default;
             this.Downloads = (int?)obj["downloads"] ?? 0;
-            var sha1String = (string)obj["sha1"];
+            var sha1String = (string?)obj["sha1"];
             if (!string.IsNullOrEmpty(sha1String))
-                this.SHA1 = HexString.Parse(sha1String);
+                this.SHA1 = HexString.Parse(sha1String!);
 
-            this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>)obj.ToObject(typeof(Dictionary<string, object>)));
+            this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>?)obj.ToObject(typeof(Dictionary<string, object>)) ?? new Dictionary<string, object>());
         }
 
         /// <summary>
         /// Gets the package group.
         /// </summary>
-        public string Group => this.FullName.Group;
+        public string? Group => this.FullName.Group;
         /// <summary>
         /// Gets the package name.
         /// </summary>
@@ -56,15 +56,15 @@ namespace Inedo.UPack.Net
         /// <summary>
         /// Gets the package title.
         /// </summary>
-        public string Title { get; }
+        public string? Title { get; }
         /// <summary>
         /// Gets the package description.
         /// </summary>
-        public string Description { get; }
+        public string? Description { get; }
         /// <summary>
         /// Gets the package icon URL.
         /// </summary>
-        public string Icon { get; }
+        public string? Icon { get; }
         /// <summary>
         /// Gets the size of the package in bytes.
         /// </summary>

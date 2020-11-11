@@ -7,20 +7,20 @@ namespace Inedo.UPack.Packaging
     /// <summary>
     /// Represents a package registration entry.
     /// </summary>
-    public sealed class RegisteredPackage : IDictionary<string, object>
+    public sealed class RegisteredPackage : IDictionary<string, object?>
     {
-        private readonly Dictionary<string, object> properties;
+        private readonly Dictionary<string, object?> properties;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RegisteredPackage"/> class.
         /// </summary>
         public RegisteredPackage()
         {
-            this.properties = new Dictionary<string, object>();
+            this.properties = new Dictionary<string, object?>();
         }
         internal RegisteredPackage(JObject obj)
         {
-            this.properties = (Dictionary<string, object>)AH.CanonicalizeJsonToken(obj);
+            this.properties = (Dictionary<string, object?>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object?>();
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace Inedo.UPack.Packaging
         /// </summary>
         /// <param name="propertyName">Name of the property.</param>
         /// <returns>Value of the property if defined; otherwise null.</returns>
-        public object this[string propertyName]
+        public object? this[string propertyName]
         {
             get => this.GetInternal(propertyName);
             set => this.AddInternal(propertyName, value);
@@ -37,73 +37,73 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Gets or sets the group of the package.
         /// </summary>
-        public string Group
+        public string? Group
         {
-            get => (string)this.GetPropertyValue("group");
+            get => (string?)this.GetPropertyValue("group");
             set => this.SetPropertyValue(value, "group");
         }
         /// <summary>
         /// Gets or sets the name of the package.
         /// </summary>
-        public string Name
+        public string? Name
         {
-            get => (string)this.GetPropertyValue("name");
+            get => (string?)this.GetPropertyValue("name");
             set => this.SetPropertyValue(value, "name");
         }
         /// <summary>
         /// Gets or sets the version of the package.
         /// </summary>
-        public string Version
+        public string? Version
         {
-            get => (string)this.GetPropertyValue("version");
+            get => (string?)this.GetPropertyValue("version");
             set => this.SetPropertyValue(value, "version");
         }
         /// <summary>
         /// Gets or sets the path where the package is installed.
         /// </summary>
-        public string InstallPath
+        public string? InstallPath
         {
-            get => (string)this.GetPropertyValue("path");
+            get => (string?)this.GetPropertyValue("path");
             set => this.SetPropertyValue(value, "path");
         }
         /// <summary>
         /// Gets or sets the URL of feed where the package was installed from.
         /// </summary>
-        public string FeedUrl
+        public string? FeedUrl
         {
-            get => (string)this.GetPropertyValue("feedUrl");
+            get => (string?)this.GetPropertyValue("feedUrl");
             set => this.SetPropertyValue(value, "feedUrl");
         }
         /// <summary>
         /// Gets or sets the date of the package installation.
         /// </summary>
-        public string InstallationDate
+        public string? InstallationDate
         {
-            get => (string)this.GetPropertyValue("installationDate");
+            get => (string?)this.GetPropertyValue("installationDate");
             set => this.SetPropertyValue(value, "installationDate");
         }
         /// <summary>
         /// Gets or sets the documented reason for the package installation.
         /// </summary>
-        public string InstallationReason
+        public string? InstallationReason
         {
-            get => (string)this.GetPropertyValue("installationReason");
+            get => (string?)this.GetPropertyValue("installationReason");
             set => this.SetPropertyValue(value, "installationReason");
         }
         /// <summary>
         /// Gets or sets the name of the tool used to install the package.
         /// </summary>
-        public string InstalledUsing
+        public string? InstalledUsing
         {
-            get => (string)this.GetPropertyValue("installedUsing");
+            get => (string?)this.GetPropertyValue("installedUsing");
             set => this.SetPropertyValue(value, "installedUsing");
         }
         /// <summary>
         /// Gets or sets the name of the user that installed the package.
         /// </summary>
-        public string InstalledBy
+        public string? InstalledBy
         {
-            get => (string)this.GetPropertyValue("installedBy");
+            get => (string?)this.GetPropertyValue("installedBy");
             set => this.SetPropertyValue(value, "installedBy");
         }
         /// <summary>
@@ -111,20 +111,20 @@ namespace Inedo.UPack.Packaging
         /// </summary>
         public ICollection<string> Keys => this.properties.Keys;
 
-        ICollection<object> IDictionary<string, object>.Values => this.properties.Values;
-        int ICollection<KeyValuePair<string, object>>.Count => this.properties.Count;
-        bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
+        ICollection<object?> IDictionary<string, object?>.Values => this.properties.Values;
+        int ICollection<KeyValuePair<string, object?>>.Count => this.properties.Count;
+        bool ICollection<KeyValuePair<string, object?>>.IsReadOnly => false;
 
         /// <summary>
         /// Returns the full name of the package.
         /// </summary>
         /// <returns>Full name of the package.</returns>
-        public override string ToString() => AH.FormatName(this.Group, this.Name);
+        public override string ToString() => AH.FormatName(this.Group, this.Name ?? string.Empty);
         /// <summary>
         /// Gets a key/value pair enumerator for all properties.
         /// </summary>
         /// <returns>Key/value pair enumerator for all properties.</returns>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => this.properties.GetEnumerator();
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => this.properties.GetEnumerator();
         /// <summary>
         /// Returns a value indicating whether the specified property is defined.
         /// </summary>
@@ -138,12 +138,12 @@ namespace Inedo.UPack.Packaging
         /// <returns>True if property was removed; otherwise false.</returns>
         public bool Remove(string key) => this.properties.Remove(key);
 
-        internal Dictionary<string, object> GetInternalDictionary() => this.properties;
+        internal Dictionary<string, object?> GetInternalDictionary() => this.properties;
 
-        private void AddInternal(string key, object value) => this.properties[key] = value;
-        private object GetInternal(string propertyName) => this.properties.TryGetValue(propertyName, out var value) ? value : null;
-        private object GetPropertyValue(string propertyName) => this.GetInternal(propertyName);
-        private void SetPropertyValue(object value, string propertyName)
+        private void AddInternal(string key, object? value) => this.properties[key] = value;
+        private object? GetInternal(string propertyName) => this.properties.TryGetValue(propertyName, out var value) ? value : null;
+        private object? GetPropertyValue(string propertyName) => this.GetInternal(propertyName);
+        private void SetPropertyValue(object? value, string propertyName)
         {
             if (value != null)
                 this.properties[propertyName] = value;
@@ -151,13 +151,13 @@ namespace Inedo.UPack.Packaging
                 this.properties.Remove(propertyName);
         }
 
-        void IDictionary<string, object>.Add(string key, object value) => this.AddInternal(key, value);
-        bool IDictionary<string, object>.TryGetValue(string key, out object value) => this.properties.TryGetValue(key, out value);
-        void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item) => this.AddInternal(item.Key, item.Value);
-        void ICollection<KeyValuePair<string, object>>.Clear() => this.properties.Clear();
-        bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item) => ((ICollection<KeyValuePair<string, object>>)this.properties).Contains(item);
-        void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex) => ((ICollection<KeyValuePair<string, object>>)this.properties).CopyTo(array, arrayIndex);
-        bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item) => ((ICollection<KeyValuePair<string, object>>)this.properties).Remove(item);
+        void IDictionary<string, object?>.Add(string key, object? value) => this.AddInternal(key, value);
+        bool IDictionary<string, object?>.TryGetValue(string key, out object? value) => this.properties.TryGetValue(key, out value);
+        void ICollection<KeyValuePair<string, object?>>.Add(KeyValuePair<string, object?> item) => this.AddInternal(item.Key, item.Value);
+        void ICollection<KeyValuePair<string, object?>>.Clear() => this.properties.Clear();
+        bool ICollection<KeyValuePair<string, object?>>.Contains(KeyValuePair<string, object?> item) => ((ICollection<KeyValuePair<string, object?>>)this.properties).Contains(item);
+        void ICollection<KeyValuePair<string, object?>>.CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex) => ((ICollection<KeyValuePair<string, object?>>)this.properties).CopyTo(array, arrayIndex);
+        bool ICollection<KeyValuePair<string, object?>>.Remove(KeyValuePair<string, object?> item) => ((ICollection<KeyValuePair<string, object?>>)this.properties).Remove(item);
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
     }
 }

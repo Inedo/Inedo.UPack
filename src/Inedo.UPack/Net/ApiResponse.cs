@@ -28,7 +28,11 @@ namespace Inedo.UPack.Net
         /// <summary>
         /// Releases resources used by the instance.
         /// </summary>
-        public void Dispose() => this.Dispose(true);
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         /// Releases resources used by the instance.

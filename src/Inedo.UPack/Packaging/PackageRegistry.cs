@@ -44,7 +44,7 @@ namespace Inedo.UPack.Packaging
         /// <summary>
         /// Gets the current lock token if a lock is taken; otherwise null.
         /// </summary>
-        public string LockToken { get; private set; }
+        public string? LockToken { get; private set; }
 
         /// <summary>
         /// Returns an instance of the <see cref="PackageRegistry"/> class that represents a package registry on the system.
@@ -75,13 +75,13 @@ namespace Inedo.UPack.Packaging
         /// Attempts to acquire an exclusive lock on the package registry.
         /// </summary>
         /// <param name="reason">Reason for the lock. This will be generated if not specified.</param>
-        public Task LockAsync(string reason) => this.LockRegistryAsync(null, default);
+        public Task LockAsync(string? reason) => this.LockRegistryAsync(reason, default);
         /// <summary>
         /// Attempts to acquire an exclusive lock on the package registry.
         /// </summary>
         /// <param name="reason">Reason for the lock. This will be generated if not specified.</param>
         /// <param name="cancellationToken">Token used to cancel the lock acquisition.</param>
-        public Task LockAsync(string reason, CancellationToken cancellationToken) => this.LockRegistryAsync(null, cancellationToken);
+        public Task LockAsync(string? reason, CancellationToken cancellationToken) => this.LockRegistryAsync(reason, cancellationToken);
         /// <summary>
         /// Attempts to acquire an exclusive lock on the package registry.
         /// </summary>
@@ -170,10 +170,8 @@ namespace Inedo.UPack.Packaging
             var fileName = this.GetCachedPackagePath(packageId, packageVersion, true);
             try
             {
-                using (var fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
-                {
-                    await packageStream.CopyToAsync(fileStream, 81920, cancellationToken);
-                }
+                using var fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+                await packageStream.CopyToAsync(fileStream, 81920, cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -228,7 +226,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="cancellationToken">Token used to cancel the operation.</param>
         /// <returns>Stream backed by the specified cached package, or null if the package was not found.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
-        public Task<Stream> TryOpenFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, CancellationToken cancellationToken)
+        public Task<Stream?> TryOpenFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, CancellationToken cancellationToken)
         {
             if (packageId == null)
                 throw new ArgumentNullException(nameof(packageId));
@@ -237,17 +235,17 @@ namespace Inedo.UPack.Packaging
 
             var fileName = this.GetCachedPackagePath(packageId, packageVersion);
             if (!File.Exists(fileName))
-                return Task.FromResult<Stream>(null);
+                return Task.FromResult<Stream?>(null);
 
             try
             {
-                return Task.FromResult<Stream>(new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete));
+                return Task.FromResult<Stream?>(new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete));
             }
             catch (IOException)
             {
                 // The File.Exists check above should handle most instances of this, but there is still
                 // the possibility of a race condition if the file gets deleted before it is opened.
-                return Task.FromResult<Stream>(null);
+                return Task.FromResult<Stream?>(null);
             }
         }
         /// <summary>
@@ -257,7 +255,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="packageId">The ID of the package to open.</param>
         /// <param name="packageVersion">The version of the package to open.</param>
         /// <returns>Stream backed by the specified cached package, or null if the package was not found.</returns>
-        public Task<Stream> TryOpenFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion) => this.TryOpenFromCacheAsync(packageId, packageVersion, default);
+        public Task<Stream?> TryOpenFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion) => this.TryOpenFromCacheAsync(packageId, packageVersion, default);
 
         void IDisposable.Dispose()
         {
@@ -278,7 +276,7 @@ namespace Inedo.UPack.Packaging
             }
         }
 
-        private async Task LockRegistryAsync(string reason, CancellationToken cancellationToken)
+        private async Task LockRegistryAsync(string? reason, CancellationToken cancellationToken)
         {
             var fileName = Path.Combine(this.RegistryRoot, ".lock");
 
@@ -326,7 +324,7 @@ namespace Inedo.UPack.Packaging
             // at this point, lock is acquired provided everyone is following the rules
             this.LockToken = lockToken;
 
-            FileInfo getFileInfo()
+            FileInfo? getFileInfo()
             {
                 try
                 {
@@ -354,7 +352,7 @@ namespace Inedo.UPack.Packaging
             if (!File.Exists(fileName))
                 return;
 
-            string token;
+            string? token;
             using (var lockStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
             using (var reader = new StreamReader(lockStream, AH.UTF8))
             {
@@ -386,41 +384,37 @@ namespace Inedo.UPack.Packaging
             if (!File.Exists(fileName))
                 return new List<RegisteredPackage>();
 
-            using (var configStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-            using (var streamReader = new StreamReader(configStream, AH.UTF8))
-            using (var jsonReader = new JsonTextReader(streamReader))
-            {
-                return JArray.Load(jsonReader)
-                    .Select(o => new RegisteredPackage((JObject)o))
-                    .ToList();
-            }
+            using var configStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+            using var streamReader = new StreamReader(configStream, AH.UTF8);
+            using var jsonReader = new JsonTextReader(streamReader);
+            return JArray.Load(jsonReader)
+                .Select(o => new RegisteredPackage((JObject)o))
+                .ToList();
         }
         private static void WriteInstalledPackages(string registryRoot, IEnumerable<RegisteredPackage> packages)
         {
             Directory.CreateDirectory(registryRoot);
             var fileName = Path.Combine(registryRoot, "installedPackages.json");
 
-            using (var configStream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
-            using (var streamWriter = new StreamWriter(configStream, AH.UTF8))
-            using (var jsonWriter = new JsonTextWriter(streamWriter))
-            {
-                new JsonSerializer { Formatting = Formatting.Indented }.Serialize(jsonWriter, packages.Select(p => p.GetInternalDictionary()).ToArray());
-            }
+            using var configStream = new FileStream(fileName, FileMode.Create, FileAccess.Write);
+            using var streamWriter = new StreamWriter(configStream, AH.UTF8);
+            using var jsonWriter = new JsonTextWriter(streamWriter);
+            new JsonSerializer { Formatting = Formatting.Indented }.Serialize(jsonWriter, packages.Select(p => p.GetInternalDictionary()).ToArray());
         }
-        private static bool PackageNameAndGroupEquals(RegisteredPackage p1, RegisteredPackage p2)
+        private static bool PackageNameAndGroupEquals(RegisteredPackage? p1, RegisteredPackage? p2)
         {
             if (ReferenceEquals(p1, p2))
                 return true;
-            if (ReferenceEquals(p1, null) | ReferenceEquals(p2, null))
+            if (p1 is null || p2 is null)
                 return false;
 
             return string.Equals(p1.Group ?? string.Empty, p2.Group ?? string.Empty, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(p1.Name, p2.Name, StringComparison.OrdinalIgnoreCase);
         }
-        private static string GetLockReason(string reason)
+        private static string GetLockReason(string? reason)
         {
             if (!string.IsNullOrWhiteSpace(reason))
-                return reason;
+                return reason!;
 
             var asm = Assembly.GetEntryAssembly();
             if (asm != null)

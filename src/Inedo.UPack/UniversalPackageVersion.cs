@@ -25,7 +25,7 @@ namespace Inedo.UPack
         /// <param name="patch">The patch number.</param>
         /// <param name="prerelease">The prerelease version string.</param>
         /// <param name="build">The build metadata.</param>
-        public UniversalPackageVersion(BigInteger major, BigInteger minor, BigInteger patch, string prerelease, string build)
+        public UniversalPackageVersion(BigInteger major, BigInteger minor, BigInteger patch, string? prerelease, string? build)
         {
             this.Major = major;
             this.Minor = minor;
@@ -40,7 +40,7 @@ namespace Inedo.UPack
         /// <param name="minor">The minor version number.</param>
         /// <param name="patch">The patch number.</param>
         /// <param name="prerelease">The prerelease version string.</param>
-        public UniversalPackageVersion(BigInteger major, BigInteger minor, BigInteger patch, string prerelease)
+        public UniversalPackageVersion(BigInteger major, BigInteger minor, BigInteger patch, string? prerelease)
             : this(major, minor, patch, prerelease, null)
         {
         }
@@ -55,14 +55,12 @@ namespace Inedo.UPack
         {
         }
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public static bool operator ==(UniversalPackageVersion a, UniversalPackageVersion b) => Equals(a, b);
-        public static bool operator !=(UniversalPackageVersion a, UniversalPackageVersion b) => !Equals(a, b);
-        public static bool operator <(UniversalPackageVersion a, UniversalPackageVersion b) => Compare(a, b) < 0;
-        public static bool operator >(UniversalPackageVersion a, UniversalPackageVersion b) => Compare(a, b) > 0;
-        public static bool operator <=(UniversalPackageVersion a, UniversalPackageVersion b) => Compare(a, b) <= 0;
-        public static bool operator >=(UniversalPackageVersion a, UniversalPackageVersion b) => Compare(a, b) >= 0;
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+        public static bool operator ==(UniversalPackageVersion? a, UniversalPackageVersion? b) => Equals(a, b);
+        public static bool operator !=(UniversalPackageVersion? a, UniversalPackageVersion? b) => !Equals(a, b);
+        public static bool operator <(UniversalPackageVersion? a, UniversalPackageVersion? b) => Compare(a, b) < 0;
+        public static bool operator >(UniversalPackageVersion? a, UniversalPackageVersion? b) => Compare(a, b) > 0;
+        public static bool operator <=(UniversalPackageVersion? a, UniversalPackageVersion? b) => Compare(a, b) <= 0;
+        public static bool operator >=(UniversalPackageVersion? a, UniversalPackageVersion? b) => Compare(a, b) >= 0;
 
         /// <summary>
         /// Gets the major version number.
@@ -79,21 +77,20 @@ namespace Inedo.UPack
         /// <summary>
         /// Gets the prerelease string.
         /// </summary>
-        public string Prerelease { get; }
+        public string? Prerelease { get; }
         /// <summary>
         /// Gets the build metadata.
         /// </summary>
-        public string Build { get; }
+        public string? Build { get; }
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public static UniversalPackageVersion TryParse(string s)
+        public static UniversalPackageVersion? TryParse(string? s)
         {
             if (string.IsNullOrEmpty(s))
                 return null;
 
             return ParseInternal(s, out _);
         }
-        public static UniversalPackageVersion Parse(string s)
+        public static UniversalPackageVersion Parse(string? s)
         {
             if (string.IsNullOrEmpty(s))
                 throw new ArgumentNullException(nameof(s));
@@ -101,11 +98,11 @@ namespace Inedo.UPack
             var version = ParseInternal(s, out var error);
             return version ?? throw new ArgumentException(error);
         }
-        public static bool Equals(UniversalPackageVersion a, UniversalPackageVersion b)
+        public static bool Equals(UniversalPackageVersion? a, UniversalPackageVersion? b)
         {
             if (ReferenceEquals(a, b))
                 return true;
-            if (ReferenceEquals(a, null) | ReferenceEquals(b, null))
+            if (a is null || b is null)
                 return false;
 
             return a.Major == b.Major
@@ -114,13 +111,13 @@ namespace Inedo.UPack
                 && string.Equals(a.Prerelease, b.Prerelease, StringComparison.Ordinal)
                 && string.Equals(a.Build, b.Build, StringComparison.Ordinal);
         }
-        public static int Compare(UniversalPackageVersion a, UniversalPackageVersion b)
+        public static int Compare(UniversalPackageVersion? a, UniversalPackageVersion? b)
         {
             if (ReferenceEquals(a, b))
                 return 0;
-            if (ReferenceEquals(a, null))
+            if (a is null)
                 return -1;
-            if (ReferenceEquals(b, null))
+            if (b is null)
                 return 1;
 
             int diff = a.Major.CompareTo(b.Major);
@@ -146,8 +143,8 @@ namespace Inedo.UPack
             return 0;
         }
 
-        public bool Equals(UniversalPackageVersion other) => Equals(this, other);
-        public override bool Equals(object obj) => this.Equals(obj as UniversalPackageVersion);
+        public bool Equals(UniversalPackageVersion? other) => Equals(this, other);
+        public override bool Equals(object? obj) => this.Equals(obj as UniversalPackageVersion);
         public override int GetHashCode() => ((int)this.Major << 20) | ((int)this.Minor << 10) | (int)this.Patch;
         public override string ToString()
         {
@@ -172,13 +169,12 @@ namespace Inedo.UPack
 
             return buffer.ToString();
         }
-        public int CompareTo(UniversalPackageVersion other) => Compare(this, other);
-        int IComparable.CompareTo(object obj) => this.CompareTo(obj as UniversalPackageVersion);
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+        public int CompareTo(UniversalPackageVersion? other) => Compare(this, other);
+        int IComparable.CompareTo(object? obj) => this.CompareTo(obj as UniversalPackageVersion);
 
-        private static UniversalPackageVersion ParseInternal(string s, out string error)
+        private static UniversalPackageVersion? ParseInternal(string? s, out string? error)
         {
-            var match = SemanticVersionRegex.Match(s);
+            var match = SemanticVersionRegex.Match(s ?? string.Empty);
             if (!match.Success)
             {
                 error = "String is not a valid semantic version.";
@@ -195,7 +191,7 @@ namespace Inedo.UPack
             error = null;
             return new UniversalPackageVersion(major, minor, patch, prerelease, build);
         }
-        private static int ComparePrerelease(string a, string b)
+        private static int ComparePrerelease(string? a, string? b)
         {
             if (a == null && b == null)
                 return 0;
@@ -250,7 +246,7 @@ namespace Inedo.UPack
 
             return 0;
         }
-        private static int CompareBuild(string a, string b)
+        private static int CompareBuild(string? a, string? b)
         {
             if (a == null && b == null)
                 return 0;
