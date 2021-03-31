@@ -386,7 +386,7 @@ namespace Inedo.UPack.Packaging
 
             using var configStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
             using var streamReader = new StreamReader(configStream, AH.UTF8);
-            using var jsonReader = new JsonTextReader(streamReader);
+            using var jsonReader = new JsonTextReader(streamReader) { DateParseHandling = DateParseHandling.None };
             return JArray.Load(jsonReader)
                 .Select(o => new RegisteredPackage((JObject)o))
                 .ToList();
