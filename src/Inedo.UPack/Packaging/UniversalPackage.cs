@@ -42,23 +42,40 @@ namespace Inedo.UPack.Packaging
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            if (!stream.CanSeek)
+            try
             {
-                var tempStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
-                stream.CopyTo(tempStream);
-                if (!leaveOpen)
-                    stream.Dispose();
+                Stream? tempStream = null;
+                try
+                {
+                    if (!stream.CanSeek)
+                    {
+                        tempStream = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
+                        stream.CopyTo(tempStream);
+                        if (!leaveOpen)
+                            stream.Dispose();
 
-                tempStream.Position = 0;
-                this.zip = new ZipArchive(tempStream, ZipArchiveMode.Read, false);
+                        tempStream.Position = 0;
+                        this.zip = new ZipArchive(tempStream, ZipArchiveMode.Read, false);
+                    }
+                    else
+                    {
+                        this.zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen);
+                    }
+
+                    this.Entries = new EntryCollection(this);
+                    this.metadata = this.ReadMetadata();
+                }
+                catch
+                {
+                    tempStream?.Dispose();
+                    throw;
+                }
             }
-            else
+            catch when (!leaveOpen)
             {
-                this.zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen);
+                stream.Dispose();
+                throw;
             }
-
-            this.Entries = new EntryCollection(this);
-            this.metadata = this.ReadMetadata();
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackage"/> class.
