@@ -230,7 +230,7 @@ namespace Inedo.UPack.Packaging
 
             using var stream = entry.Open();
             using var reader = new StreamReader(stream, Encoding.UTF8);
-            using var json = new JsonTextReader(reader);
+            using var json = new JsonTextReader(reader) { DateParseHandling = DateParseHandling.None };
             var obj = JObject.Load(json);
             return new UniversalPackageMetadata(obj);
         }
