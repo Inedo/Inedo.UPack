@@ -113,7 +113,14 @@ namespace Inedo.UPack
             }
         }
 
-        public override string ToString() => this.FullName + ":" + (this.Version?.ToString() ?? "*");
+        public override string ToString()
+        {
+            if (this.Version is null)
+                return this.FullName.ToString();
+            else
+                return this.FullName + ":" + this.Version;
+        }
+
         public bool Equals(UniversalPackageDependency? other)
         {
             if (ReferenceEquals(this, other))
