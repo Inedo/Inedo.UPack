@@ -26,7 +26,18 @@ namespace Inedo.UPack
         public UniversalPackageDependency(UniversalPackageId id, UniversalPackageVersion? version)
         {
             this.FullName = id ?? throw new ArgumentNullException(nameof(id));
-            this.Version = version;
+            this.VersionRange = version;
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UniversalPackageDependency"/> class.
+        /// </summary>
+        /// <param name="id">The full identifier of the package.</param>
+        /// <param name="versionRange">The required version range.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="id"/> is null.</exception>
+        public UniversalPackageDependency(UniversalPackageId id, UniversalPackageVersionRange versionRange)
+        {
+            this.FullName = id ?? throw new ArgumentNullException(nameof(id));
+            this.VersionRange = versionRange;
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackageDependency"/> class.
@@ -39,7 +50,7 @@ namespace Inedo.UPack
             : this(new UniversalPackageId(group, name), version)
         {
             this.FullName = new UniversalPackageId(group, name);
-            this.Version = version;
+            this.VersionRange = version;
         }
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackageDependency"/> class.
@@ -50,6 +61,18 @@ namespace Inedo.UPack
         public UniversalPackageDependency(string group, string name)
             : this(group, name, null)
         {
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UniversalPackageDependency"/> class.
+        /// </summary>
+        /// <param name="group">The package group.</param>
+        /// <param name="name">The package name.</param>
+        /// <param name="versionRange">The required version range.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is null or empty.</exception>
+        public UniversalPackageDependency(string? group, string name, UniversalPackageVersionRange versionRange)
+        {
+            this.FullName = new UniversalPackageId(group, name);
+            this.VersionRange = versionRange;
         }
 
         /// <summary>
@@ -67,7 +90,12 @@ namespace Inedo.UPack
         /// <summary>
         /// Gets the version of the dependency or null if any version is allowed.
         /// </summary>
-        public UniversalPackageVersion? Version { get; }
+        [Obsolete($"This property only returns the lower bound of a version range. Use the {nameof(VersionRange)} property instead.")]
+        public UniversalPackageVersion? Version => this.VersionRange.LowerBound;
+        /// <summary>
+        /// Gets the version range of the dependency.
+        /// </summary>
+        public UniversalPackageVersionRange VersionRange { get; }
 
         /// <summary>
         /// Returns a <see cref="UniversalPackageDependency"/> instance parsed from the specified string.
@@ -95,8 +123,7 @@ namespace Inedo.UPack
                     return new UniversalPackageDependency(n);
                 }
 
-                var v = UniversalPackageVersion.TryParse(parts[1]);
-                if (v != null)
+                if (UniversalPackageVersionRange.TryParse(parts[1], out var v))
                 {
                     var n = ExtractGroup(parts[0]);
                     return new UniversalPackageDependency(n, v);
@@ -109,16 +136,16 @@ namespace Inedo.UPack
                 if (parts[2] == "*")
                     return new UniversalPackageDependency(parts[0], parts[1]);
                 else
-                    return new UniversalPackageDependency(parts[0], parts[1], UniversalPackageVersion.Parse(parts[2]));
+                    return new UniversalPackageDependency(parts[0], parts[1], UniversalPackageVersionRange.Parse(parts[2]));
             }
         }
 
         public override string ToString()
         {
-            if (this.Version is null)
+            if (this.VersionRange == UniversalPackageVersionRange.Any)
                 return this.FullName.ToString();
             else
-                return this.FullName + ":" + this.Version;
+                return this.FullName + ":" + this.VersionRange;
         }
 
         public bool Equals(UniversalPackageDependency? other)
@@ -130,17 +157,10 @@ namespace Inedo.UPack
 
             return this.Group == other.Group
                 && this.Name == other.Name
-                && this.Version == other.Version;
+                && this.VersionRange == other.VersionRange;
         }
         public override bool Equals(object? obj) => this.Equals(obj as UniversalPackageDependency);
-        public override int GetHashCode()
-        {
-            int ver = 0;
-            if (this.Version != null)
-                ver = this.Version.GetHashCode();
-
-            return this.FullName.GetHashCode() ^ ver;
-        }
+        public override int GetHashCode() => this.FullName.GetHashCode() ^ this.VersionRange.GetHashCode();
 
         private static UniversalPackageId ExtractGroup(string fullName)
         {

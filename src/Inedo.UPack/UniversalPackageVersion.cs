@@ -12,7 +12,7 @@ namespace Inedo.UPack
     public sealed class UniversalPackageVersion : IEquatable<UniversalPackageVersion>, IComparable<UniversalPackageVersion>, IComparable
     {
         private static readonly char[] Dot = new[] { '.' };
-        private static readonly Regex SemanticVersionRegex = new Regex(
+        private static readonly Regex SemanticVersionRegex = new(
             @"^(?<1>[0-9]+)\.(?<2>[0-9]+)\.(?<3>[0-9]+)(-(?<4>[0-9a-zA-Z\.-]+))?(\+(?<5>[0-9a-zA-Z\.-]+))?$",
             RegexOptions.Compiled | RegexOptions.ExplicitCapture
         );
