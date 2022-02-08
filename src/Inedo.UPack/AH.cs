@@ -13,7 +13,7 @@ namespace Inedo.UPack
         {
             get
             {
-#if NET45
+#if NET452
                 return Task.FromResult<object?>(null);
 #else
                 return Task.CompletedTask;
