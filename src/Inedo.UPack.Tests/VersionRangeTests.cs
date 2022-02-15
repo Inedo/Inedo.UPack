@@ -66,6 +66,25 @@ namespace Inedo.UPack.Tests
         }
 
         [TestMethod]
+        public void ParseOpenEndedRange1()
+        {
+            var ver1 = new UniversalPackageVersion(1, 0, 0);
+            var v = UniversalPackageVersionRange.Parse("[1.0.0,]");
+            Assert.AreEqual(ver1, v.LowerBound);
+            Assert.IsFalse(v.LowerExclusive);
+            Assert.IsNull(v.UpperBound);
+        }
+        [TestMethod]
+        public void ParseOpenEndedRange2()
+        {
+            var ver1 = new UniversalPackageVersion(1, 0, 0);
+            var v = UniversalPackageVersionRange.Parse("[,1.0.0]");
+            Assert.AreEqual(ver1, v.UpperBound);
+            Assert.IsFalse(v.UpperExclusive);
+            Assert.IsNull(v.LowerBound);
+        }
+
+        [TestMethod]
         [ExpectedException(typeof(FormatException))]
         public void ParseInvalid()
         {

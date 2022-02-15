@@ -144,11 +144,11 @@ namespace Inedo.UPack
                 return false;
 
             var lower = UniversalPackageVersion.TryParse(parts[0]);
-            if (lower == null)
+            if (lower == null && !string.IsNullOrWhiteSpace(parts[0]))
                 return false;
 
             var upper = UniversalPackageVersion.TryParse(parts[1]);
-            if (upper == null)
+            if (upper == null && !string.IsNullOrWhiteSpace(parts[1]))
                 return false;
 
             value = new UniversalPackageVersionRange(lower, lowerExclusive, upper, upperExclusive);
