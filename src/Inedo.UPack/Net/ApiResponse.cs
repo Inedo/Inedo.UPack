@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Inedo.UPack.Net
 {
@@ -24,7 +26,7 @@ namespace Inedo.UPack.Net
         /// Gets the response content body as a stream.
         /// </summary>
         /// <returns>Stream backed by the response content body.</returns>
-        public abstract Stream GetResponseStream();
+        public abstract Task<Stream> GetResponseStreamAsync(CancellationToken cancellationToken = default);
         /// <summary>
         /// Releases resources used by the instance.
         /// </summary>

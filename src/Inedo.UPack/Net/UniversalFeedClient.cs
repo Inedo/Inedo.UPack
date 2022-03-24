@@ -89,7 +89,7 @@ namespace Inedo.UPack.Net
             if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
                 throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
 
-            using var responseStream = response.GetResponseStream();
+            using var responseStream = await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
             using var reader = new StreamReader(responseStream, Encoding.UTF8);
             using var jsonReader = new JsonTextReader(reader);
             var arr = await JArray.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
@@ -133,7 +133,7 @@ namespace Inedo.UPack.Net
             if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
                 throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
 
-            using var responseStream = response.GetResponseStream();
+            using var responseStream = await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
             using var reader = new StreamReader(responseStream, Encoding.UTF8);
             using var jsonReader = new JsonTextReader(reader);
             var arr = await JArray.LoadAsync(jsonReader, cancellationToken).ConfigureAwait(false);
@@ -219,7 +219,7 @@ namespace Inedo.UPack.Net
                 throw new ArgumentNullException(nameof(version));
 
             var results = await this.ListVersionsInternalAsync(id, version, includeFileList, null, cancellationToken).ConfigureAwait(false);
-            return results.FirstOrDefault();
+            return results.Count > 0 ? results[0] : null;
         }
 
         /// <summary>
@@ -264,7 +264,7 @@ namespace Inedo.UPack.Net
             var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
             try
             {
-                return response.GetResponseStream();
+                return await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
             }
             catch
             {
@@ -319,7 +319,7 @@ namespace Inedo.UPack.Net
             var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
             try
             {
-                return response.GetResponseStream();
+                return await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
             }
             catch
             {
@@ -393,7 +393,7 @@ namespace Inedo.UPack.Net
                 else
                 {
                     var v = this.localRepository.Value.GetPackageVersion(id, version);
-                    return v != null ? new[] { v } : new RemoteUniversalPackageVersion[0];
+                    return v != null ? new[] { v } : Array.Empty<RemoteUniversalPackageVersion>();
                 }
             }
 
@@ -403,7 +403,7 @@ namespace Inedo.UPack.Net
             if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
                 throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
 
-            using var responseStream = response.GetResponseStream();
+            using var responseStream = await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
             using var reader = new StreamReader(responseStream, AH.UTF8);
             using var jsonReader = new JsonTextReader(reader);
             if (version == null)

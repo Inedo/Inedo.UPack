@@ -93,7 +93,7 @@ namespace Inedo.UPack.Packaging
         public Task UnlockAsync()
         {
             this.UnlockRegistry();
-            return AH.CompletedTask;
+            return Task.CompletedTask;
         }
         /// <summary>
         /// Returns a list of packages in the registry.
@@ -104,15 +104,9 @@ namespace Inedo.UPack.Packaging
         /// Adds or replaces a package registration entry in the registry.
         /// </summary>
         /// <param name="package">The package to register.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="package"/> is null.</exception>
-        public Task RegisterPackageAsync(RegisteredPackage package) => this.RegisterPackageAsync(package, default);
-        /// <summary>
-        /// Adds or replaces a package registration entry in the registry.
-        /// </summary>
-        /// <param name="package">The package to register.</param>
         /// <param name="cancellationToken">Token used to cancel the package registration.</param>
         /// <exception cref="ArgumentNullException"><paramref name="package"/> is null.</exception>
-        public Task RegisterPackageAsync(RegisteredPackage package, CancellationToken cancellationToken)
+        public Task RegisterPackageAsync(RegisteredPackage package, CancellationToken cancellationToken = default)
         {
             if (package == null)
                 throw new ArgumentNullException(nameof(package));
@@ -123,7 +117,7 @@ namespace Inedo.UPack.Packaging
             packages.Add(package);
 
             WriteInstalledPackages(this.RegistryRoot, packages);
-            return AH.CompletedTask;
+            return Task.CompletedTask;
         }
         /// <summary>
         /// Removes a package registration entry from the registry.
@@ -131,7 +125,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="package">THe package to unregister.</param>
         /// <param name="cancellationToken">Token used to cancel the operation.</param>
         /// <returns>True if package was unregistered; false if it was not in the registry.</returns>
-        public Task<bool> UnregisterPackageAsync(RegisteredPackage package, CancellationToken cancellationToken)
+        public Task<bool> UnregisterPackageAsync(RegisteredPackage package, CancellationToken cancellationToken = default)
         {
             if (package == null)
                 throw new ArgumentNullException(nameof(package));
@@ -145,12 +139,6 @@ namespace Inedo.UPack.Packaging
             return Task.FromResult(removed);
         }
         /// <summary>
-        /// Removes a package registration entry from the registry.
-        /// </summary>
-        /// <param name="package">The package to unregister.</param>
-        /// <returns>True if package was unregistered; false if it was not in the registry.</returns>
-        public Task<bool> UnregisterPackageAsync(RegisteredPackage package) => this.UnregisterPackageAsync(package, default);
-        /// <summary>
         /// Copies data from a stream to a cached package file in the registry.
         /// </summary>
         /// <param name="packageId">The ID of the package to cache.</param>
@@ -158,7 +146,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="packageStream">Stream backed by the package to cache.</param>
         /// <param name="cancellationToken">Token used to cancel the operation.</param>
         /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
-        public async Task WriteToCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, Stream packageStream, CancellationToken cancellationToken)
+        public async Task WriteToCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, Stream packageStream, CancellationToken cancellationToken = default)
         {
             if (packageId == null)
                 throw new ArgumentNullException(nameof(packageId));
@@ -180,14 +168,6 @@ namespace Inedo.UPack.Packaging
             }
         }
         /// <summary>
-        /// Copies data from a stream to a cached package file in the registry.
-        /// </summary>
-        /// <param name="packageId">The ID of the package to cache.</param>
-        /// <param name="packageVersion">The version of the package to cache.</param>
-        /// <param name="packageStream">Stream backed by the package to cache.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
-        public Task WriteToCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, Stream packageStream) => this.WriteToCacheAsync(packageId, packageVersion, packageStream, default);
-        /// <summary>
         /// Deletes the specified package from the package cache.
         /// </summary>
         /// <param name="packageId">The ID of the package to delete.</param>
@@ -197,7 +177,7 @@ namespace Inedo.UPack.Packaging
         /// <remarks>
         /// No exception is raised if the package was not in the cache to begin with.
         /// </remarks>
-        public Task DeleteFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, CancellationToken cancellationToken)
+        public Task DeleteFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, CancellationToken cancellationToken = default)
         {
             if (packageId == null)
                 throw new ArgumentNullException(nameof(packageId));
@@ -205,18 +185,8 @@ namespace Inedo.UPack.Packaging
                 throw new ArgumentNullException(nameof(packageVersion));
 
             File.Delete(this.GetCachedPackagePath(packageId, packageVersion));
-            return AH.CompletedTask;
+            return Task.CompletedTask;
         }
-        /// <summary>
-        /// Deletes the specified package from the package cache.
-        /// </summary>
-        /// <param name="packageId">The ID of the package to delete.</param>
-        /// <param name="packageVersion">The version of the package to delete.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
-        /// <remarks>
-        /// No exception is raised if the package was not in the cache to begin with.
-        /// </remarks>
-        public Task DeleteFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion) => this.DeleteFromCacheAsync(packageId, packageVersion, default);
         /// <summary>
         /// Returns a stream backed by the specified cached package if possible; returns <c>null</c> if
         /// the package was not found in the cache.
@@ -226,7 +196,7 @@ namespace Inedo.UPack.Packaging
         /// <param name="cancellationToken">Token used to cancel the operation.</param>
         /// <returns>Stream backed by the specified cached package, or null if the package was not found.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="packageId"/> is null or <paramref name="packageVersion"/> is null.</exception>
-        public Task<Stream?> TryOpenFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, CancellationToken cancellationToken)
+        public Task<Stream?> TryOpenFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion, CancellationToken cancellationToken = default)
         {
             if (packageId == null)
                 throw new ArgumentNullException(nameof(packageId));
@@ -248,14 +218,6 @@ namespace Inedo.UPack.Packaging
                 return Task.FromResult<Stream?>(null);
             }
         }
-        /// <summary>
-        /// Returns a stream backed by the specified cached package if possible; returns <c>null</c> if
-        /// the package was not found in the cache.
-        /// </summary>
-        /// <param name="packageId">The ID of the package to open.</param>
-        /// <param name="packageVersion">The version of the package to open.</param>
-        /// <returns>Stream backed by the specified cached package, or null if the package was not found.</returns>
-        public Task<Stream?> TryOpenFromCacheAsync(UniversalPackageId packageId, UniversalPackageVersion packageVersion) => this.TryOpenFromCacheAsync(packageId, packageVersion, default);
 
         void IDisposable.Dispose()
         {

@@ -1,5 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -25,60 +28,30 @@ namespace Inedo.UPack.Net
         /// Gets or sets the User Agent string to use when making requests.
         /// </summary>
         public string? UserAgent { get; set; }
+        /// <summary>
+        /// Gets or sets the delegate used to create a <see cref="HttpClient"/> instance.
+        /// </summary>
+        /// <remarks>
+        /// When <c>null</c>, the default internal factory is used.
+        /// </remarks>
+        public Func<ApiRequest, HttpClient>? HttpClientFactory { get; set; }
 
         public override async Task<ApiResponse> GetResponseAsync(ApiRequest request, CancellationToken cancellationToken)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            var webRequest = BuildWebRequest(request);
-            webRequest.Method = request.Method;
-            webRequest.ContentType = request.ContentType;
+            using var message = BuildRequestMessage(request);
+            using var content = new StreamContent(request.RequestBody ?? Stream.Null);
+            if (!string.IsNullOrEmpty(request.ContentType))
+                content.Headers.ContentType = new MediaTypeHeaderValue(request.ContentType);
             if (!string.IsNullOrEmpty(this.UserAgent))
-                webRequest.UserAgent = this.UserAgent;
+                message.Headers.UserAgent.ParseAdd(this.UserAgent);
 
-            if (request.RequestBody != null)
-            {
-                if (request.RequestBody.CanSeek)
-                {
-                    webRequest.AllowWriteStreamBuffering = false;
-                    webRequest.ContentLength = request.RequestBody.Length - request.RequestBody.Position;
-                }
-
-                using var requestStream = await webRequest.GetRequestStreamAsync().ConfigureAwait(false);
-                await request.RequestBody.CopyToAsync(requestStream, 81920, cancellationToken).ConfigureAwait(false);
-            }
-
-            var webResponse = await webRequest.GetResponseAsync(cancellationToken).ConfigureAwait(false);
-            return new DefaultApiResponse(webResponse);
+            var client = this.GetHttpClient(request);
+            return new DefaultApiResponse(await client.SendAsync(message, cancellationToken).ConfigureAwait(false));
         }
 
-        /// <summary>
-        /// Returns a <see cref="HttpWebRequest"/> to use based on the specified <see cref="ApiRequest"/>.
-        /// </summary>
-        /// <param name="r">The desired request.</param>
-        /// <returns>Valid <see cref="HttpWebRequest"/> object.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="r"/> is null.</exception>
-        protected static HttpWebRequest BuildWebRequest(ApiRequest r)
-        {
-            if (r == null)
-                throw new ArgumentNullException(nameof(r));
-
-            var url = r.Endpoint.Uri.ToString();
-            if (!url.EndsWith("/"))
-                url += "/";
-            url += r.RelativeUrl;
-
-            var request = WebRequest.CreateHttp(url);
-            request.KeepAlive = false;
-
-            if (r.Endpoint.UseDefaultCredentials)
-                request.UseDefaultCredentials = true;
-            else if (!string.IsNullOrEmpty(r.Endpoint.UserName) && r.Endpoint.Password != null)
-                request.Headers.Add(HttpRequestHeader.Authorization, "Basic " + GetBasicAuthToken(r.Endpoint.UserName!, r.Endpoint.Password));
-
-            return request;
-        }
         /// <summary>
         /// Returns a standard Base64-encoded HTTP basic authentication token containing the specified user name and password.
         /// </summary>
@@ -127,5 +100,24 @@ namespace Inedo.UPack.Net
                 }
             }
         }
+
+        protected static HttpRequestMessage BuildRequestMessage(ApiRequest r)
+        {
+            if (r == null)
+                throw new ArgumentNullException(nameof(r));
+
+            var url = r.Endpoint.Uri.ToString();
+            if (!url.EndsWith("/"))
+                url += "/";
+            url += r.RelativeUrl;
+
+            var message = new HttpRequestMessage(new HttpMethod(r.Method), url);
+            if (!string.IsNullOrEmpty(r.Endpoint.UserName) && r.Endpoint.Password != null)
+                message.Headers.Authorization = new AuthenticationHeaderValue("Basic", GetBasicAuthToken(r.Endpoint.UserName!, r.Endpoint.Password));
+
+            return message;
+        }
+
+        protected HttpClient GetHttpClient(ApiRequest r) => this.HttpClientFactory?.Invoke(r) ?? InternalHttpClientFactory.GetClient(r);
     }
 }
