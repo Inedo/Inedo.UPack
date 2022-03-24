@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Inedo.UPack.Net
 {
@@ -101,7 +100,7 @@ namespace Inedo.UPack.Net
             {
                 foreach (var fileName in Directory.EnumerateFiles(this.RootPath, "*.upack", SearchOption.TopDirectoryOnly))
                 {
-                    JObject obj;
+                    JsonObject obj;
                     using (var zip = ZipFile.OpenRead(fileName))
                     {
                         var upackEntry = zip.GetEntry("upack.json");
@@ -109,8 +108,7 @@ namespace Inedo.UPack.Net
                             continue;
 
                         using var upackStream = upackEntry.Open();
-                        using var jsonReader = new JsonTextReader(new StreamReader(upackStream, AH.UTF8));
-                        obj = JObject.Load(jsonReader);
+                        obj = (JsonObject)JsonNode.Parse(upackStream)!;
                         obj["published"] = new DateTimeOffset(File.GetCreationTime(fileName));
                         obj["size"] = new FileInfo(fileName).Length;
                     }
@@ -120,23 +118,23 @@ namespace Inedo.UPack.Net
             }
         }
 
-        private static JObject GetMungedPackage(IEnumerable<PackageFile> packageVersions)
+        private static JsonObject GetMungedPackage(IEnumerable<PackageFile> packageVersions)
         {
             var sorted = (from p in packageVersions
                           let v = UniversalPackageVersion.Parse((string?)p.JObject["version"])
                           orderby v descending
                           select p).ToList();
 
-            var latest = (JObject)sorted.First().JObject.DeepClone();
+            var latest = (JsonObject)JsonNode.Parse(sorted.First().JObject.ToJsonString())!;
             latest["latestVersion"] = latest["version"];
             latest.Remove("version");
-            latest["versions"] = new JArray(sorted.Select(v => (string?)v.JObject["version"]));
+            latest["versions"] = new JsonArray(sorted.Select(v => v.JObject["version"]).ToArray());
             return latest;
         }
 
         private readonly struct PackageKey : IEquatable<PackageKey>
         {
-            public PackageKey(JObject obj)
+            public PackageKey(JsonObject obj)
             {
                 this.Group = (string?)obj["group"] ?? string.Empty;
                 this.Name = (string?)obj["name"] ?? string.Empty;
@@ -157,14 +155,14 @@ namespace Inedo.UPack.Net
 
         private readonly struct PackageFile
         {
-            public PackageFile(string fileName, JObject obj)
+            public PackageFile(string fileName, JsonObject obj)
             {
                 this.FileName = fileName;
                 this.JObject = obj;
             }
 
             public string FileName { get; }
-            public JObject JObject { get; }
+            public JsonObject JObject { get; }
             public bool IsNull => this.FileName == null;
         }
 

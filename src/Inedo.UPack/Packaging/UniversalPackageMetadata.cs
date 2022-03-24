@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Packaging
 {
@@ -24,7 +25,7 @@ namespace Inedo.UPack.Packaging
             this.RepackageHistory = new RepackageEntryList(this);
             this.Tags = new TagList(this);
         }
-        internal UniversalPackageMetadata(JObject obj)
+        internal UniversalPackageMetadata(JsonObject obj)
         {
             this.properties = (Dictionary<string, object?>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object?>();
             this.Dependencies = new DependencyList(this);
@@ -184,7 +185,14 @@ namespace Inedo.UPack.Packaging
         /// <returns>Key/value pair enumerator for all properties.</returns>
         public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => this.properties.GetEnumerator();
 
-        internal void WriteJson(JsonTextWriter json) => new JsonSerializer().Serialize(json, this.properties);
+        internal void WriteJson(Utf8JsonWriter writer)
+        {
+            JsonSerializer.Serialize(
+                writer,
+                this.properties,
+                typeof(Dictionary<string, object?>)
+            );
+        }
 
         private void AddInternal(string key, object? value) => this.properties[key] = value;
         private object? GetInternal(string propertyName) => this.properties.TryGetValue(propertyName, out var value) ? value : null;

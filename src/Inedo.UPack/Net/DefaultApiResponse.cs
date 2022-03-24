@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +8,7 @@ namespace Inedo.UPack.Net
 {
     /// <summary>
     /// Default implementation of <see cref="ApiResponse"/> which encapsulates a
-    /// <see cref="HttpWebResponse"/> object.
+    /// <see cref="HttpResponseMessage"/> object.
     /// </summary>
     public class DefaultApiResponse : ApiResponse
     {

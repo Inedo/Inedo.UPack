@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Net
 {
@@ -14,7 +14,7 @@ namespace Inedo.UPack.Net
     /// </remarks>
     public sealed class RemoteUniversalPackage
     {
-        internal RemoteUniversalPackage(JObject obj)
+        internal RemoteUniversalPackage(JsonObject obj)
         {
             var group = (string?)obj["group"];
             var name = (string?)obj["name"];
@@ -34,8 +34,8 @@ namespace Inedo.UPack.Net
             this.Description = (string?)obj["description"];
             this.Downloads = (int?)obj["downloads"] ?? 0;
 
-            this.AllVersions = Array.AsReadOnly(((JArray?)obj["versions"])!.Select(t => UniversalPackageVersion.Parse((string?)t)).ToArray());
-            this.AllProperties = new ReadOnlyDictionary<string, object?>((IDictionary<string, object?>?)obj.ToObject(typeof(Dictionary<string, object?>)) ?? new Dictionary<string, object?>());
+            this.AllVersions = Array.AsReadOnly(((JsonArray?)obj["versions"])!.Select(t => UniversalPackageVersion.Parse((string?)t)).ToArray());
+            this.AllProperties = new ReadOnlyDictionary<string, object?>((IDictionary<string, object?>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object?>());
         }
 
         /// <summary>

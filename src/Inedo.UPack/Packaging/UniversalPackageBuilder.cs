@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace Inedo.UPack.Packaging
 {
@@ -225,9 +224,8 @@ namespace Inedo.UPack.Packaging
         {
             var entry = this.zip.CreateEntry("upack.json");
             using var entryStream = entry.Open();
-            using var writer = new StreamWriter(entryStream, new UTF8Encoding(false));
-            using var jsonWriter = new JsonTextWriter(writer) { Formatting = Formatting.Indented };
-            metadata.WriteJson(jsonWriter);
+            using var writer = new Utf8JsonWriter(entryStream, new JsonWriterOptions { Indented = true });
+            metadata.WriteJson(writer);
         }
         private static async Task AddContentsInternalAsync(string sourcePath, string targetPath, bool recursive, Predicate<string>? shouldInclude, Func<Stream, string, DateTimeOffset, CancellationToken, Task> add, Action<string> addEmptyDir, CancellationToken cancellationToken)
         {

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Inedo.UPack.Packaging
 {
@@ -347,10 +347,8 @@ namespace Inedo.UPack.Packaging
                 return new List<RegisteredPackage>();
 
             using var configStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-            using var streamReader = new StreamReader(configStream, AH.UTF8);
-            using var jsonReader = new JsonTextReader(streamReader) { DateParseHandling = DateParseHandling.None };
-            return JArray.Load(jsonReader)
-                .Select(o => new RegisteredPackage((JObject)o))
+            return ((JsonArray)JsonNode.Parse(configStream)!)
+                .Select(o => new RegisteredPackage((JsonObject)o!))
                 .ToList();
         }
         private static void WriteInstalledPackages(string registryRoot, IEnumerable<RegisteredPackage> packages)
@@ -359,9 +357,12 @@ namespace Inedo.UPack.Packaging
             var fileName = Path.Combine(registryRoot, "installedPackages.json");
 
             using var configStream = new FileStream(fileName, FileMode.Create, FileAccess.Write);
-            using var streamWriter = new StreamWriter(configStream, AH.UTF8);
-            using var jsonWriter = new JsonTextWriter(streamWriter);
-            new JsonSerializer { Formatting = Formatting.Indented }.Serialize(jsonWriter, packages.Select(p => p.GetInternalDictionary()).ToArray());
+            JsonSerializer.Serialize(
+                configStream,
+                packages.Select(p => p.GetInternalDictionary()).ToArray(),
+                typeof(Dictionary<string, object?>[]),
+                new JsonSerializerOptions { WriteIndented = true }
+            );
         }
         private static bool PackageNameAndGroupEquals(RegisteredPackage? p1, RegisteredPackage? p2)
         {

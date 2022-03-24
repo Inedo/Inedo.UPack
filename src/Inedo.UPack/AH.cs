@@ -1,6 +1,6 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace Inedo.UPack
 {
@@ -73,19 +73,28 @@ namespace Inedo.UPack
             return true;
         }
 
-        public static object? CanonicalizeJsonToken(JToken? token)
+        public static object? CanonicalizeJsonToken(JsonNode? token)
         {
-            if (token is JValue v)
-                return v.ToString();
+            if (token is JsonValue value)
+                return value.ToString();
 
-            if (token is JObject o)
+            if (token is JsonObject obj)
             {
-                return o.Properties()
-                    .ToDictionary(p => p.Name, p => CanonicalizeJsonToken(p.Value));
+                var dict = new Dictionary<string, object?>();
+                foreach (var p in obj)
+                    dict[p.Key] = CanonicalizeJsonToken(p.Value);
+
+                return dict;
             }
 
-            if (token is JArray a)
-                return a.Select(CanonicalizeJsonToken).ToArray();
+            if (token is JsonArray array)
+            {
+                var arr = new List<object?>();
+                foreach (var v in array)
+                    arr.Add(CanonicalizeJsonToken(v));
+
+                return arr.ToArray();
+            }
 
             return null;
         }

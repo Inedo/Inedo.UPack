@@ -4,11 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Inedo.UPack.Packaging
 {
@@ -229,9 +227,7 @@ namespace Inedo.UPack.Packaging
                 throw new InvalidDataException("upack.json not found in package.");
 
             using var stream = entry.Open();
-            using var reader = new StreamReader(stream, Encoding.UTF8);
-            using var json = new JsonTextReader(reader) { DateParseHandling = DateParseHandling.None };
-            var obj = JObject.Load(json);
+            var obj = (JsonObject)JsonNode.Parse(stream)!;
             return new UniversalPackageMetadata(obj);
         }
 

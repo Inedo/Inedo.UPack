@@ -9,8 +9,8 @@ namespace Inedo.UPack
     [Serializable]
     public sealed class UniversalPackageId : IEquatable<UniversalPackageId>, IComparable<UniversalPackageId>, IComparable
     {
-        private static readonly Regex GroupRegex = new Regex(@"^[0-9A-Za-z\-\./_]+$", RegexOptions.Compiled);
-        private static readonly Regex NameRegex = new Regex(@"^[0-9A-Za-z\-\._]+$", RegexOptions.Compiled);
+        private static readonly Regex GroupRegex = new(@"^[0-9A-Za-z\-\./_]+$", RegexOptions.Compiled);
+        private static readonly Regex NameRegex = new(@"^[0-9A-Za-z\-\._]+$", RegexOptions.Compiled);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackageId"/> class.

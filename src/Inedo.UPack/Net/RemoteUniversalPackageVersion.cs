@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Net
 {
@@ -10,7 +10,7 @@ namespace Inedo.UPack.Net
     /// </summary>
     public sealed class RemoteUniversalPackageVersion
     {
-        internal RemoteUniversalPackageVersion(JObject obj)
+        internal RemoteUniversalPackageVersion(JsonObject obj)
         {
             var group = (string?)obj["group"];
             var name = (string?)obj["name"];
@@ -34,7 +34,7 @@ namespace Inedo.UPack.Net
             if (!string.IsNullOrEmpty(sha1String))
                 this.SHA1 = HexString.Parse(sha1String!);
 
-            this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>?)obj.ToObject(typeof(Dictionary<string, object>)) ?? new Dictionary<string, object>());
+            this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object>());
         }
 
         /// <summary>

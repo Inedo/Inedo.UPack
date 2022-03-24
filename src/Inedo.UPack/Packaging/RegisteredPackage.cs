@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Packaging
 {
@@ -18,7 +18,7 @@ namespace Inedo.UPack.Packaging
         {
             this.properties = new Dictionary<string, object?>();
         }
-        internal RegisteredPackage(JObject obj)
+        internal RegisteredPackage(JsonObject obj)
         {
             this.properties = (Dictionary<string, object?>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object?>();
         }
