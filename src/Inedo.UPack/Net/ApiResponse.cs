@@ -21,12 +21,20 @@ namespace Inedo.UPack.Net
         /// Gets the Content-Type of the response.
         /// </summary>
         public abstract string ContentType { get; }
+        /// <summary>
+        /// Gets the HTTP status code of the response.
+        /// </summary>
+        public abstract int StatusCode { get; }
 
         /// <summary>
         /// Gets the response content body as a stream.
         /// </summary>
         /// <returns>Stream backed by the response content body.</returns>
         public abstract Task<Stream> GetResponseStreamAsync(CancellationToken cancellationToken = default);
+        /// <summary>
+        /// Raises an exception if the response was not successful.
+        /// </summary>
+        public abstract void ThrowIfNotSuccessful();
         /// <summary>
         /// Releases resources used by the instance.
         /// </summary>

@@ -49,7 +49,7 @@ namespace Inedo.UPack.Net
                 message.Headers.UserAgent.ParseAdd(this.UserAgent);
 
             var client = this.GetHttpClient(request);
-            return new DefaultApiResponse(await client.SendAsync(message, cancellationToken).ConfigureAwait(false));
+            return new DefaultApiResponse(await client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false));
         }
 
         /// <summary>

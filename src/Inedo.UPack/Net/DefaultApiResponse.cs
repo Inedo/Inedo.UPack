@@ -22,6 +22,7 @@ namespace Inedo.UPack.Net
         public DefaultApiResponse(HttpResponseMessage response) => this.response = response ?? throw new ArgumentNullException(nameof(response));
 
         public override string ContentType => this.response.Content.Headers.ContentType?.ToString() ?? string.Empty;
+        public override int StatusCode => (int)this.response.StatusCode;
 
         public override Task<Stream> GetResponseStreamAsync(CancellationToken cancellationToken = default)
         {
@@ -31,6 +32,7 @@ namespace Inedo.UPack.Net
             return this.response.Content.ReadAsStreamAsync(cancellationToken);
 #endif
         }
+        public override void ThrowIfNotSuccessful() => this.response.EnsureSuccessStatusCode();
 
         protected override void Dispose(bool disposing)
         {

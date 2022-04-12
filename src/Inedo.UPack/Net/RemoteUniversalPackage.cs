@@ -32,7 +32,7 @@ namespace Inedo.UPack.Net
             this.Title = (string?)obj["title"];
             this.Icon = (string?)obj["icon"];
             this.Description = (string?)obj["description"];
-            this.Downloads = (int?)obj["downloads"] ?? 0;
+            this.Downloads = int.TryParse(obj["downloads"]?.ToString(), out int d) ? d : 0;
 
             this.AllVersions = Array.AsReadOnly(((JsonArray?)obj["versions"])!.Select(t => UniversalPackageVersion.Parse((string?)t)).ToArray());
             this.AllProperties = new ReadOnlyDictionary<string, object?>((IDictionary<string, object?>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object?>());

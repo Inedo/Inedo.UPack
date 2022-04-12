@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31129.286
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inedo.UPack", "Inedo.UPack\Inedo.UPack.csproj", "{3463922C-0F46-4C9C-9735-5A0585C805AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inedo.UPack.Tests", "Inedo.UPack.Tests\Inedo.UPack.Tests.csproj", "{1C2F93B0-FA26-4CBB-858D-CF13D38FC26E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inedo.UPack.Tests", "Inedo.UPack.Tests\Inedo.UPack.Tests.csproj", "{1C2F93B0-FA26-4CBB-858D-CF13D38FC26E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
