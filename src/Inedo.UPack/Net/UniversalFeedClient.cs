@@ -93,16 +93,15 @@ namespace Inedo.UPack.Net
             }
         }
         /// <summary>
-        /// Returns a list of all package versions optionally filtered by group and name.
+        /// Returns a list of all package versions optionally filtered by group.
         /// </summary>
         /// <param name="group">Group of the package.</param>
-        /// <param name="name">Name of the package.</param>
         /// <param name="maxCount">Maximum number of versions to return. Null indicates no limit.</param>
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <returns>List of all package versions.</returns>
-        public IAsyncEnumerable<RemoteUniversalPackageVersion> EnumeratePackageVersionsAsync(string? group, string? name, int? maxCount = null, CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<RemoteUniversalPackageVersion> EnumeratePackageVersionsAsync(string? group = null, int? maxCount = null, CancellationToken cancellationToken = default)
         {
-            return this.EnumerateVersionsInternalAsync(group, name, null, false, maxCount, cancellationToken);
+            return this.EnumerateVersionsInternalAsync(group, null, null, false, maxCount, cancellationToken);
         }
 
         /// <summary>
