@@ -92,6 +92,18 @@ namespace Inedo.UPack.Net
                 yield return new RemoteUniversalPackage(JsonObject.Create(item)!);
             }
         }
+        /// <summary>
+        /// Returns a list of all package versions optionally filtered by group and name.
+        /// </summary>
+        /// <param name="group">Group of the package.</param>
+        /// <param name="name">Name of the package.</param>
+        /// <param name="maxCount">Maximum number of versions to return. Null indicates no limit.</param>
+        /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
+        /// <returns>List of all package versions.</returns>
+        public IAsyncEnumerable<RemoteUniversalPackageVersion> EnumeratePackageVersionsAsync(string? group, string? name, int? maxCount = null, CancellationToken cancellationToken = default)
+        {
+            return this.EnumerateVersionsInternalAsync(group, name, null, false, maxCount, cancellationToken);
+        }
 
         /// <summary>
         /// Returns a list of packages with the specified group.
@@ -171,7 +183,7 @@ namespace Inedo.UPack.Net
         /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
         /// <exception cref="ArgumentNullException"><paramref name="id"/> is null.</exception>
         /// <returns>List of all package versions.</returns>
-        public Task<IReadOnlyList<RemoteUniversalPackageVersion>> ListPackageVersionsAsync(UniversalPackageId id, bool includeFileList = false, int? maxCount = null, CancellationToken cancellationToken = default) => this.ListVersionsInternalAsync(id, null, includeFileList, maxCount, cancellationToken);
+        public Task<IReadOnlyList<RemoteUniversalPackageVersion>> ListPackageVersionsAsync(UniversalPackageId? id, bool includeFileList = false, int? maxCount = null, CancellationToken cancellationToken = default) => this.ListVersionsInternalAsync(id, null, includeFileList, maxCount, cancellationToken);
         /// <summary>
         /// Returns metadata for a specific version of a package, or null if the package was not found.
         /// </summary>
@@ -318,13 +330,13 @@ namespace Inedo.UPack.Net
             using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<IReadOnlyList<RemoteUniversalPackageVersion>> ListVersionsInternalAsync(UniversalPackageId id, UniversalPackageVersion? version, bool includeFileList, int? maxCount, CancellationToken cancellationToken)
+        private async Task<IReadOnlyList<RemoteUniversalPackageVersion>> ListVersionsInternalAsync(UniversalPackageId? id, UniversalPackageVersion? version, bool includeFileList, int? maxCount, CancellationToken cancellationToken)
         {
             if (this.Endpoint.IsLocalDirectory)
             {
-                if (version == null)
+                if (id == null || version == null)
                 {
-                    return this.localRepository.Value.ListPackageVersions(id).ToList();
+                    return this.localRepository.Value.ListPackageVersions(id?.Group, id?.Name).ToList();
                 }
                 else
                 {
@@ -359,6 +371,52 @@ namespace Inedo.UPack.Net
             {
                 var obj = (JsonObject)JsonNode.Parse(responseStream)!;
                 return new[] { new RemoteUniversalPackageVersion(obj) };
+            }
+        }
+
+        private async IAsyncEnumerable<RemoteUniversalPackageVersion> EnumerateVersionsInternalAsync(string? group, string? name, UniversalPackageVersion? version, bool includeFileList, int? maxCount, [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            if (this.Endpoint.IsLocalDirectory)
+            {
+                IEnumerable<RemoteUniversalPackageVersion> localPackages;
+                if (name == null || version == null)
+                {
+                    localPackages = this.localRepository.Value.ListPackageVersions(group, name);
+                }
+                else
+                {
+                    var v = this.localRepository.Value.GetPackageVersion(new UniversalPackageId(group, name), version);
+                    localPackages = v != null ? new[] { v } : Enumerable.Empty<RemoteUniversalPackageVersion>();
+                }
+
+                foreach (var p in localPackages)
+                    yield return p;
+
+                yield break;
+            }
+
+            var url = FormatUrl("versions", ("group", group), ("name", name), ("version", version?.ToString()), ("includeFileList", includeFileList), ("count", maxCount));
+            var request = new ApiRequest(this.Endpoint, url);
+            using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
+            if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
+                throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
+
+            using var responseStream = await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
+            if (version == null)
+            {
+                using var doc = await JsonDocument.ParseAsync(responseStream, cancellationToken: cancellationToken).ConfigureAwait(false);
+                foreach (var item in doc.RootElement.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.Object)
+                        throw new InvalidDataException("Unexpected token in JSON array.");
+
+                    yield return new RemoteUniversalPackageVersion(JsonObject.Create(item)!);
+                }
+            }
+            else
+            {
+                var obj = (JsonObject)JsonNode.Parse(responseStream)!;
+                yield return new RemoteUniversalPackageVersion(obj);
             }
         }
 

@@ -42,14 +42,24 @@ namespace Inedo.UPack.Net
                 return s!.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
             }
         }
-        public IEnumerable<RemoteUniversalPackageVersion> ListPackageVersions(UniversalPackageId id)
+        public IEnumerable<RemoteUniversalPackageVersion> ListPackageVersions(string? group, string? name)
         {
-            return this.allPackages.Value[new PackageKey(id.Group, id.Name)]
-                .Select(p => new RemoteUniversalPackageVersion(p.JObject));
+            IEnumerable<PackageFile> packages;
+
+            if (group is null && name is null)
+                packages = this.allPackages.Value.SelectMany(g => g);
+            else if (group is not null && name is null)
+                packages = this.allPackages.Value.Where(g => string.Equals(g.Key.Group, group, StringComparison.OrdinalIgnoreCase)).SelectMany(g => g);
+            else if (group is null && name is not null)
+                packages = this.allPackages.Value.Where(g => string.Equals(g.Key.Name, name, StringComparison.OrdinalIgnoreCase)).SelectMany(g => g);
+            else
+                packages = this.allPackages.Value[new PackageKey(group, name!)];
+
+            return packages.Select(p => new RemoteUniversalPackageVersion(p.JObject));
         }
         public RemoteUniversalPackageVersion? GetPackageVersion(UniversalPackageId id, UniversalPackageVersion version)
         {
-            return this.ListPackageVersions(id)
+            return this.ListPackageVersions(id?.Group, id?.Name)
                 .FirstOrDefault(p => p.Version == version);
         }
         public Stream? GetPackageStream(UniversalPackageId id, UniversalPackageVersion? version)
