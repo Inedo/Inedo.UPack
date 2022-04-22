@@ -1,9 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Inedo.UPack.Net
+﻿namespace Inedo.UPack.Net
 {
     /// <summary>
     /// Represents a response received from a upack API endpoint.

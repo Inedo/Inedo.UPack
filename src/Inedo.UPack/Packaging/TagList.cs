@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Inedo.UPack.Packaging
+﻿namespace Inedo.UPack.Packaging
 {
     partial class UniversalPackageMetadata
     {

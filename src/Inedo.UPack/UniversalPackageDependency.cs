@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Inedo.UPack
+﻿namespace Inedo.UPack
 {
     /// <summary>
     /// Represents a universal package dependency specification.

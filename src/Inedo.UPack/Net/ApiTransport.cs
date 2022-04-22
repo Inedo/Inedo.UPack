@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Inedo.UPack.Net
+﻿namespace Inedo.UPack.Net
 {
     /// <summary>
     /// Represents the transport layer used for making upack API requests.

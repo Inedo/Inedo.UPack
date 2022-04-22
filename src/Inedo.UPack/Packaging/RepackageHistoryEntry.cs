@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Inedo.UPack.Packaging
+﻿namespace Inedo.UPack.Packaging
 {
     /// <summary>
     /// Contains information for a repackage event.

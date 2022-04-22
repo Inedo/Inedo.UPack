@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace Inedo.UPack.Net
+﻿namespace Inedo.UPack.Net
 {
     /// <summary>
     /// Specifies the information required to make a upack feed API request.
