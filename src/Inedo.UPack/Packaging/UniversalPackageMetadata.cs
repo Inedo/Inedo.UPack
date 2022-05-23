@@ -153,6 +153,25 @@ namespace Inedo.UPack.Packaging
         bool ICollection<KeyValuePair<string, object?>>.IsReadOnly => false;
 
         /// <summary>
+        /// Reads upack.json metadata from a <see cref="Stream"/>.
+        /// </summary>
+        /// <param name="upackJsonStream"><see cref="Stream"/> containing upack.json metadata.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"><paramref name="upackJsonStream"/> is null.</exception>
+        /// <exception cref="FormatException">JSON is invalid.</exception>
+        public static UniversalPackageMetadata Parse(Stream upackJsonStream)
+        {
+            if (upackJsonStream == null)
+                throw new ArgumentNullException(nameof(upackJsonStream));
+
+            var node = JsonNode.Parse(upackJsonStream);
+            if (node is not JsonObject obj)
+                throw new FormatException("Expected JSON object in upack.json.");
+
+            return new UniversalPackageMetadata(obj);
+        }
+
+        /// <summary>
         /// Returns a shallow copy of all package metadata.
         /// </summary>
         /// <returns>Shallow copy of this instance.</returns>
