@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Inedo.UPack
@@ -72,6 +73,50 @@ namespace Inedo.UPack
             return true;
         }
 
+        public static object? CanonicalizeJsonToken(JsonElement token)
+        {
+            switch (token.ValueKind)
+            {
+                case JsonValueKind.String:
+                    return token.GetString();
+
+                case JsonValueKind.True:
+                    return true;
+
+                case JsonValueKind.False:
+                    return false;
+
+                case JsonValueKind.Number:
+                    if (token.TryGetInt32(out int intValue))
+                        return intValue;
+                    else if (token.TryGetInt64(out long longValue))
+                        return longValue;
+                    else if (token.TryGetDouble(out double doubleValue))
+                        return doubleValue;
+                    else
+                        return token.ToString();
+
+                case JsonValueKind.Array:
+                    {
+                        var arr = new object?[token.GetArrayLength()];
+                        int i = 0;
+                        foreach (var v in token.EnumerateArray())
+                            arr[i++] = CanonicalizeJsonToken(v);
+                        return arr;
+                    }
+
+                case JsonValueKind.Object:
+                    {
+                        var dict = new Dictionary<string, object?>();
+                        foreach (var p in token.EnumerateObject())
+                            dict[p.Name] = CanonicalizeJsonToken(p.Value);
+                        return dict;
+                    }
+
+                default:
+                    return null;
+            }
+        }
         public static object? CanonicalizeJsonToken(JsonNode? token)
         {
             if (token is JsonValue value)

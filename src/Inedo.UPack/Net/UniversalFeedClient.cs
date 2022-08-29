@@ -83,7 +83,7 @@ namespace Inedo.UPack.Net
                 if (item.ValueKind != JsonValueKind.Object)
                     throw new InvalidDataException("Unexpected token in JSON array.");
 
-                yield return new RemoteUniversalPackage(JsonObject.Create(item)!);
+                yield return new RemoteUniversalPackage(item);
             }
         }
         /// <summary>
@@ -119,15 +119,18 @@ namespace Inedo.UPack.Net
 
             using var responseStream = await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
 
-            var arr = (JsonArray)JsonNode.Parse(responseStream)!;
-            var results = new List<RemoteUniversalPackage>(arr.Count);
+            using var doc = await JsonDocument.ParseAsync(responseStream, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (doc.RootElement.ValueKind != JsonValueKind.Array)
+                throw new InvalidDataException("Expected JSON array.");
 
-            foreach (var token in arr)
+            var results = new List<RemoteUniversalPackage>(doc.RootElement.GetArrayLength());
+
+            foreach (var token in doc.RootElement.EnumerateArray())
             {
-                if (token is not JsonObject obj)
+                if (token.ValueKind != JsonValueKind.Object)
                     throw new InvalidDataException("Unexpected token in JSON array.");
 
-                results.Add(new RemoteUniversalPackage(obj));
+                results.Add(new RemoteUniversalPackage(token));
             }
 
             return results.AsReadOnly();
@@ -154,15 +157,19 @@ namespace Inedo.UPack.Net
                 throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
 
             using var responseStream = await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
-            var arr = (JsonArray)JsonNode.Parse(responseStream)!;
-            var results = new List<RemoteUniversalPackage>(arr.Count);
 
-            foreach (var token in arr)
+            using var doc = await JsonDocument.ParseAsync(responseStream, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (doc.RootElement.ValueKind != JsonValueKind.Array)
+                throw new InvalidDataException("Expected JSON array.");
+
+            var results = new List<RemoteUniversalPackage>(doc.RootElement.GetArrayLength());
+
+            foreach (var token in doc.RootElement.EnumerateArray())
             {
-                if (token is not JsonObject obj)
+                if (token.ValueKind != JsonValueKind.Object)
                     throw new InvalidDataException("Unexpected token in JSON array.");
 
-                results.Add(new RemoteUniversalPackage(obj));
+                results.Add(new RemoteUniversalPackage(token));
             }
 
             return results.AsReadOnly();
@@ -345,25 +352,24 @@ namespace Inedo.UPack.Net
                 throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
 
             using var responseStream = await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
+            using var doc = await JsonDocument.ParseAsync(responseStream, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (version == null)
             {
-                var arr = (JsonArray)JsonNode.Parse(responseStream)!;
-                var results = new List<RemoteUniversalPackageVersion>(arr.Count);
+                var results = new List<RemoteUniversalPackageVersion>(doc.RootElement.GetArrayLength());
 
-                foreach (var token in arr)
+                foreach (var token in doc.RootElement.EnumerateArray())
                 {
-                    if (token is not JsonObject obj)
+                    if (token.ValueKind != JsonValueKind.Object)
                         throw new InvalidDataException("Unexpected token in JSON array.");
 
-                    results.Add(new RemoteUniversalPackageVersion(obj));
+                    results.Add(new RemoteUniversalPackageVersion(token));
                 }
 
                 return results.AsReadOnly();
             }
             else
             {
-                var obj = (JsonObject)JsonNode.Parse(responseStream)!;
-                return new[] { new RemoteUniversalPackageVersion(obj) };
+                return new[] { new RemoteUniversalPackageVersion(doc.RootElement) };
             }
         }
 
@@ -395,21 +401,20 @@ namespace Inedo.UPack.Net
                 throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
 
             using var responseStream = await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
+            using var doc = await JsonDocument.ParseAsync(responseStream, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (version == null)
             {
-                using var doc = await JsonDocument.ParseAsync(responseStream, cancellationToken: cancellationToken).ConfigureAwait(false);
                 foreach (var item in doc.RootElement.EnumerateArray())
                 {
                     if (item.ValueKind != JsonValueKind.Object)
                         throw new InvalidDataException("Unexpected token in JSON array.");
 
-                    yield return new RemoteUniversalPackageVersion(JsonObject.Create(item)!);
+                    yield return new RemoteUniversalPackageVersion(item);
                 }
             }
             else
             {
-                var obj = (JsonObject)JsonNode.Parse(responseStream)!;
-                yield return new RemoteUniversalPackageVersion(obj);
+                yield return new RemoteUniversalPackageVersion(doc.RootElement);
             }
         }
 

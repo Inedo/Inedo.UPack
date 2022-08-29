@@ -341,8 +341,9 @@ namespace Inedo.UPack.Packaging
                 return new List<RegisteredPackage>();
 
             using var configStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-            return ((JsonArray)JsonNode.Parse(configStream)!)
-                .Select(o => new RegisteredPackage((JsonObject)o!))
+            using var doc = JsonDocument.Parse(configStream);
+            return doc.RootElement.EnumerateArray()
+                .Select(e => new RegisteredPackage(e))
                 .ToList();
         }
         private static void WriteInstalledPackages(string registryRoot, IEnumerable<RegisteredPackage> packages)

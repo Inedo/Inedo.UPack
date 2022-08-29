@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.IO.Compression;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Packaging
@@ -134,8 +135,7 @@ namespace Inedo.UPack.Packaging
                 }
                 else if (string.Equals(entry.RawPath, rawPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (maybeMatches == null)
-                        maybeMatches = new List<UniversalPackageEntry>();
+                    maybeMatches ??= new List<UniversalPackageEntry>();
                     maybeMatches.Add(entry);
                 }
             }
@@ -221,8 +221,8 @@ namespace Inedo.UPack.Packaging
                 throw new InvalidDataException("upack.json not found in package.");
 
             using var stream = entry.Open();
-            var obj = (JsonObject)JsonNode.Parse(stream)!;
-            return new UniversalPackageMetadata(obj);
+            using var doc = JsonDocument.Parse(stream);
+            return new UniversalPackageMetadata(doc.RootElement);
         }
 
         private static async Task ExtractItemsInternalAsync(IEnumerable<UniversalPackageEntry> entries, Func<UniversalPackageEntry, string> getRelativePath, string targetPath, CancellationToken cancellationToken)

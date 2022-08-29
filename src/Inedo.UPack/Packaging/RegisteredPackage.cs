@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Packaging
@@ -17,7 +18,7 @@ namespace Inedo.UPack.Packaging
         {
             this.properties = new Dictionary<string, object?>();
         }
-        internal RegisteredPackage(JsonObject obj)
+        internal RegisteredPackage(JsonElement obj)
         {
             this.properties = (Dictionary<string, object?>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object?>();
         }

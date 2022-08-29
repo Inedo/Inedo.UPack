@@ -22,7 +22,7 @@ namespace Inedo.UPack.Packaging
             this.RepackageHistory = new RepackageEntryList(this);
             this.Tags = new TagList(this);
         }
-        internal UniversalPackageMetadata(JsonObject obj)
+        internal UniversalPackageMetadata(JsonElement obj)
         {
             this.properties = (Dictionary<string, object?>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object?>();
             this.Dependencies = new DependencyList(this);
@@ -164,11 +164,11 @@ namespace Inedo.UPack.Packaging
             if (upackJsonStream == null)
                 throw new ArgumentNullException(nameof(upackJsonStream));
 
-            var node = JsonNode.Parse(upackJsonStream);
-            if (node is not JsonObject obj)
+            using var doc = JsonDocument.Parse(upackJsonStream);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
                 throw new FormatException("Expected JSON object in upack.json.");
 
-            return new UniversalPackageMetadata(obj);
+            return new UniversalPackageMetadata(doc.RootElement);
         }
 
         /// <summary>

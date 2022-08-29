@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Net
@@ -8,6 +9,32 @@ namespace Inedo.UPack.Net
     /// </summary>
     public sealed class RemoteUniversalPackageVersion
     {
+        internal RemoteUniversalPackageVersion(JsonElement obj)
+        {
+            var group = obj.GetStringOrDefault("group");
+            var name = obj.GetStringOrDefault("name");
+            if (string.IsNullOrEmpty(name))
+                throw new FormatException("Missing \"name\" property.");
+
+            this.FullName = new UniversalPackageId(group, name!);
+
+            var version = obj.GetStringOrDefault("version");
+            if (string.IsNullOrEmpty(version))
+                throw new FormatException("Missing \"version\" property.");
+
+            this.Version = UniversalPackageVersion.Parse(version!);
+            this.Title = obj.GetStringOrDefault("title");
+            this.Icon = obj.GetStringOrDefault("icon");
+            this.Description = obj.GetStringOrDefault("description");
+            this.Size = obj.GetInt64OrDefault("size") ?? 0;
+            this.PublishedDate = obj.GetDateTimeOffsetOrDefault("published") ?? default;
+            this.Downloads = obj.GetInt32OrDefault("downloads") ?? 0;
+            var sha1String = obj.GetStringOrDefault("sha1");
+            if (!string.IsNullOrEmpty(sha1String))
+                this.SHA1 = HexString.Parse(sha1String!);
+
+            this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object>());
+        }
         internal RemoteUniversalPackageVersion(JsonObject obj)
         {
             var group = (string?)obj["group"];
