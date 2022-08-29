@@ -37,14 +37,43 @@ namespace Inedo.UPack.Net
                 throw new ArgumentNullException(nameof(request));
 
             using var message = BuildRequestMessage(request);
-            using var content = new StreamContent(request.RequestBody ?? Stream.Null);
-            if (!string.IsNullOrEmpty(request.ContentType))
-                content.Headers.ContentType = new MediaTypeHeaderValue(request.ContentType);
-            if (!string.IsNullOrEmpty(this.UserAgent))
-                message.Headers.UserAgent.ParseAdd(this.UserAgent);
+            HttpContent? content = null;
+            try
+            {
+                if (request.RequestBody != null)
+                {
+                    content = new StreamContent(request.RequestBody);
+                    message.Content = content;
+                }
 
-            var client = this.GetHttpClient(request);
-            return new DefaultApiResponse(await client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false));
+                if (!string.IsNullOrEmpty(request.ContentType) && content != null)
+                    content.Headers.ContentType = new MediaTypeHeaderValue(request.ContentType);
+                if (!string.IsNullOrEmpty(this.UserAgent))
+                    message.Headers.UserAgent.ParseAdd(this.UserAgent);
+
+                var client = this.GetHttpClient(request);
+
+                var response = await client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var errorMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        throw new UniversalFeedException((int)response.StatusCode, $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorMessage}");
+                    }
+                }
+                catch
+                {
+                    response.Dispose();
+                    throw;
+                }
+
+                return new DefaultApiResponse(response);
+            }
+            finally
+            {
+                content?.Dispose();
+            }
         }
 
         /// <summary>
