@@ -33,6 +33,20 @@ namespace Inedo.UPack.Net
             if (!string.IsNullOrEmpty(sha1String))
                 this.SHA1 = HexString.Parse(sha1String!);
 
+            if (obj.TryGetProperty("tags", out var tagsProp) && tagsProp.ValueKind == JsonValueKind.Array && tagsProp.GetArrayLength() > 0)
+            {
+                var tags = new string[tagsProp.GetArrayLength()];
+                int i = 0;
+                foreach (var t in tagsProp.EnumerateArray())
+                    tags[i++] = t.GetString()!;
+
+                this.Tags = tags;
+            }
+            else
+            {
+                this.Tags = Array.Empty<string>();
+            }
+
             this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object>());
         }
         internal RemoteUniversalPackageVersion(JsonObject obj)
@@ -59,6 +73,7 @@ namespace Inedo.UPack.Net
             if (!string.IsNullOrEmpty(sha1String))
                 this.SHA1 = HexString.Parse(sha1String!);
 
+            this.Tags = ((JsonArray?)obj["tags"])?.Select(t => (string)t!)?.ToArray() ?? Array.Empty<string>();
             this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object>());
         }
 
@@ -110,6 +125,10 @@ namespace Inedo.UPack.Net
         /// Gets all of the raw metadata for the package.
         /// </summary>
         public IReadOnlyDictionary<string, object> AllProperties { get; }
+        /// <summary>
+        /// Gets the package's tags.
+        /// </summary>
+        public IReadOnlyCollection<string> Tags { get; }
 
         /// <summary>
         /// Returns the package ID and version.
