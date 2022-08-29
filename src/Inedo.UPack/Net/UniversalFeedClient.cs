@@ -282,6 +282,14 @@ namespace Inedo.UPack.Net
             var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
             try
             {
+                if (response.StatusCode == 404)
+                {
+                    response.Dispose();
+                    return null;
+                }
+
+                await response.ThrowIfNotSuccessfulAsync().ConfigureAwait(false);
+
                 return await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
             }
             catch
