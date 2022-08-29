@@ -31,6 +31,15 @@
         /// </summary>
         public abstract void ThrowIfNotSuccessful();
         /// <summary>
+        /// Raises an exception if the response was not successful.
+        /// </summary>
+        /// <param name="cancellation">Cancellation token.</param>
+        public virtual Task ThrowIfNotSuccessfulAsync(CancellationToken cancellation = default)
+        {
+            this.ThrowIfNotSuccessful();
+            return Task.CompletedTask;
+        }
+        /// <summary>
         /// Releases resources used by the instance.
         /// </summary>
         public void Dispose()

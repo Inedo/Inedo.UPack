@@ -52,22 +52,7 @@ namespace Inedo.UPack.Net
                     message.Headers.UserAgent.ParseAdd(this.UserAgent);
 
                 var client = this.GetHttpClient(request);
-
                 var response = await client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                try
-                {
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        var errorMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                        throw new UniversalFeedException((int)response.StatusCode, $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorMessage}");
-                    }
-                }
-                catch
-                {
-                    response.Dispose();
-                    throw;
-                }
-
                 return new DefaultApiResponse(response);
             }
             finally

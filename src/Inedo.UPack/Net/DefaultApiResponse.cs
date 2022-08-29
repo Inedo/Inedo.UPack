@@ -27,6 +27,14 @@
 #endif
         }
         public override void ThrowIfNotSuccessful() => this.response.EnsureSuccessStatusCode();
+        public override async Task ThrowIfNotSuccessfulAsync(CancellationToken cancellation = default)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                throw new UniversalFeedException((int)response.StatusCode, $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorMessage}");
+            }
+        }
 
         protected override void Dispose(bool disposing)
         {

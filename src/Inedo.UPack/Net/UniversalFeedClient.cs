@@ -239,7 +239,7 @@ namespace Inedo.UPack.Net
                     return null;
                 }
 
-                response.ThrowIfNotSuccessful();
+                await response.ThrowIfNotSuccessfulAsync().ConfigureAwait(false);
 
                 return await response.GetResponseStreamAsync(cancellationToken).ConfigureAwait(false);
             }
@@ -306,6 +306,7 @@ namespace Inedo.UPack.Net
 
             var request = new ApiRequest(this.Endpoint, "upload", method: "PUT", contentType: "application/zip", requestBody: stream);
             using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
+            await response.ThrowIfNotSuccessfulAsync().ConfigureAwait(false);
         }
         /// <summary>
         /// Deletes the specified package from the remote feed.
@@ -328,6 +329,7 @@ namespace Inedo.UPack.Net
             var request = new ApiRequest(this.Endpoint, url, method: "DELETE");
 
             using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
+            await response.ThrowIfNotSuccessfulAsync().ConfigureAwait(false);
         }
 
         private async Task<IReadOnlyList<RemoteUniversalPackageVersion>> ListVersionsInternalAsync(UniversalPackageId? id, UniversalPackageVersion? version, bool includeFileList, int? maxCount, CancellationToken cancellationToken)
