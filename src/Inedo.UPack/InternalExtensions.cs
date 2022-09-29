@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Inedo.UPack
 {
@@ -16,17 +13,27 @@ namespace Inedo.UPack
         }
         public static int? GetInt32OrDefault(this JsonElement obj, string propertyName)
         {
-            if (obj.TryGetProperty(propertyName, out var value) && value.TryGetInt32(out int intValue))
-                return intValue;
-            else
-                return null;
+            if (obj.TryGetProperty(propertyName, out var value))
+            {
+                if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out int intValue))
+                    return intValue;
+                if (value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), out intValue))
+                    return intValue;
+            }
+
+            return null;
         }
         public static long? GetInt64OrDefault(this JsonElement obj, string propertyName)
         {
-            if (obj.TryGetProperty(propertyName, out var value) && value.TryGetInt64(out long longValue))
-                return longValue;
-            else
-                return null;
+            if (obj.TryGetProperty(propertyName, out var value))
+            {
+                if (value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out long longValue))
+                    return longValue;
+                if (value.ValueKind == JsonValueKind.String && long.TryParse(value.GetString(), out longValue))
+                    return longValue;
+            }
+
+            return null;
         }
         public static DateTimeOffset? GetDateTimeOffsetOrDefault(this JsonElement obj, string propertyName)
         {
