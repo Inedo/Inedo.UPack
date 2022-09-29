@@ -5,44 +5,46 @@ namespace Inedo.UPack.Net
     /// <summary>
     /// Default <see cref="HttpClient"/> factory that reuses handlers for five minutes.
     /// </summary>
-    internal static class InternalHttpClientFactory
+    internal sealed class InternalHttpClientFactory
     {
-        private const int CleanupMilliseconds = 60 * 2 * 1000;
-        private static readonly long StaleTicks = Stopwatch.Frequency * 60 * 5;
-        private static readonly List<UsedHandler> current = new();
-        private static readonly List<UsedHandler> staleHandlers = new();
-        private static readonly object syncLock = new();
-        private static Timer? cleanupTimer;
+        private readonly List<UsedHandler> current = new();
+        private readonly List<UsedHandler> staleHandlers = new();
+        private readonly object syncLock = new();
+        private Timer? cleanupTimer;
 
-        public static HttpClient GetClient(ApiRequest r)
+        public static InternalHttpClientFactory Instance { get; } = new();
+
+        public int CleanupMilliseconds { get; set; } = 60 * 2 * 1000;
+        public long StaleTicks { get; set; } = Stopwatch.Frequency * 60 * 5;
+
+        public HttpClient GetClient(ApiRequest r)
         {
             lock (syncLock)
             {
-                if (cleanupTimer == null)
-                    cleanupTimer = new Timer(Cleanup_Tick, null, CleanupMilliseconds, CleanupMilliseconds);
+                this.cleanupTimer ??= new Timer(this.Cleanup_Tick, null, this.CleanupMilliseconds, this.CleanupMilliseconds);
 
-                foreach (var h in current)
+                foreach (var h in this.current)
                 {
                     if (h.Handler.UseDefaultCredentials == r.Endpoint.UseDefaultCredentials)
                         return h.CreateClient();
                 }
 
                 var handler = new UsedHandler(new HttpClientHandler { UseDefaultCredentials = r.Endpoint.UseDefaultCredentials });
-                current.Add(handler);
+                this.current.Add(handler);
                 return handler.CreateClient();
             }
         }
 
-        private static void Cleanup_Tick(object? _)
+        public void RunCleanup()
         {
-            lock (syncLock)
+            lock (this.syncLock)
             {
                 var currentTime = Stopwatch.GetTimestamp();
                 List<UsedHandler>? removeList = null;
 
-                foreach (var h in current)
+                foreach (var h in this.current)
                 {
-                    if (currentTime - h.Created >= StaleTicks)
+                    if (currentTime - h.Created >= this.StaleTicks)
                     {
                         removeList ??= new();
                         removeList.Add(h);
@@ -52,12 +54,15 @@ namespace Inedo.UPack.Net
                 if (removeList != null)
                 {
                     foreach (var h in removeList)
-                        staleHandlers.Add(h);
+                    {
+                        this.staleHandlers.Add(h);
+                        this.current.Remove(h);
+                    }
 
                     removeList.Clear();
                 }
 
-                foreach (var h in staleHandlers)
+                foreach (var h in this.staleHandlers)
                 {
                     if (h.CanDispose)
                     {
@@ -70,17 +75,20 @@ namespace Inedo.UPack.Net
                 if (removeList != null)
                 {
                     foreach (var h in removeList)
-                        staleHandlers.Remove(h);
+                        this.staleHandlers.Remove(h);
                 }
 
-                if (current.Count == 0 && staleHandlers.Count == 0)
+                if (this.current.Count == 0 && this.staleHandlers.Count == 0)
                 {
                     // dispose the timer if we don't need to clean anything else up
-                    cleanupTimer?.Dispose();
-                    cleanupTimer = null;
+                    this.cleanupTimer?.Dispose();
+                    this.cleanupTimer = null;
                 }
             }
+
         }
+
+        private void Cleanup_Tick(object? _) => this.RunCleanup();
 
         private sealed class UsedHandler
         {
