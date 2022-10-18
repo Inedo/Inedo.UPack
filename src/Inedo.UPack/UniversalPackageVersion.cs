@@ -8,7 +8,10 @@ namespace Inedo.UPack
     /// Represents a version used by universal packages. This version is compatible with semantic versioning 2.0.
     /// </summary>
     [Serializable]
-    public sealed class UniversalPackageVersion : IEquatable<UniversalPackageVersion>, IComparable<UniversalPackageVersion>, IComparable
+    public sealed class UniversalPackageVersion : IEquatable<UniversalPackageVersion>, IComparable<UniversalPackageVersion>, IComparable, IFormattable
+#if NET6_0_OR_GREATER
+, ISpanFormattable
+#endif
     {
         private static readonly char[] Dot = new[] { '.' };
         private static readonly Regex SemanticVersionRegex = new(
@@ -145,8 +148,34 @@ namespace Inedo.UPack
         public bool Equals(UniversalPackageVersion? other) => Equals(this, other);
         public override bool Equals(object? obj) => this.Equals(obj as UniversalPackageVersion);
         public override int GetHashCode() => ((int)this.Major << 20) | ((int)this.Minor << 10) | (int)this.Patch;
-        public override string ToString()
+        public override string ToString() => this.ToString(null);
+        /// <summary>
+        /// Returns a string representation of this version.
+        /// </summary>
+        /// <param name="format">Version format specification. See Remarks.</param>
+        /// <param name="formatProvider">Unused.</param>
+        /// <returns>String representation of the version.</returns>
+        /// <exception cref="FormatException">Invalid value for <paramref name="format"/>.</exception>
+        /// <remarks>
+        /// <paramref name="format"/> may be one of:
+        /// <list type="bullet">
+        /// <item><c>G</c> - full version number, including build metadata (default)</item>
+        /// <item><c>U</c> - unique version number (excludes build metadata)</item>
+        /// </list>
+        /// </remarks>
+        public string ToString(string? format, IFormatProvider? formatProvider = null)
         {
+            bool includeBuild = true;
+            if (!string.IsNullOrEmpty(format))
+            {
+                includeBuild = format![0] switch
+                {
+                    'G' or 'g' => true,
+                    'U' or 'u' => false,
+                    _ => throw new FormatException("Invalid format specification; must be U or G.")
+                };
+            }
+
             var buffer = new StringBuilder(50);
             buffer.Append(this.Major);
             buffer.Append('.');
@@ -160,7 +189,7 @@ namespace Inedo.UPack
                 buffer.Append(this.Prerelease);
             }
 
-            if (this.Build != null)
+            if (includeBuild && this.Build != null)
             {
                 buffer.Append('+');
                 buffer.Append(this.Build);
@@ -180,9 +209,15 @@ namespace Inedo.UPack
                 return null;
             }
 
+#if NET6_0_OR_GREATER
+            var major = BigInteger.Parse(match.Groups[1].ValueSpan);
+            var minor = BigInteger.Parse(match.Groups[2].ValueSpan);
+            var patch = BigInteger.Parse(match.Groups[3].ValueSpan);
+#else
             var major = BigInteger.Parse(match.Groups[1].Value);
             var minor = BigInteger.Parse(match.Groups[2].Value);
             var patch = BigInteger.Parse(match.Groups[3].Value);
+#endif
 
             var prerelease = AH.NullIf(match.Groups[4].Value, string.Empty);
             var build = AH.NullIf(match.Groups[5].Value, string.Empty);
@@ -262,5 +297,83 @@ namespace Inedo.UPack
 
             return string.CompareOrdinal(a, b);
         }
+
+#if NET6_0_OR_GREATER
+        public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
+        {
+            bool includeBuild = true;
+            charsWritten = 0;
+            if (!format.IsEmpty)
+            {
+                includeBuild = format[0] switch
+                {
+                    'G' or 'g' => true,
+                    'U' or 'u' => false,
+                    _ => throw new FormatException("Invalid format specification; must be U or G.")
+                };
+            }
+
+            var dest = destination;
+            if (!tryWriteValue(this.Major, ref dest, ref charsWritten))
+                return false;
+
+            if (!tryWriteChar('.', ref dest, ref charsWritten))
+                return false;
+
+            if (!tryWriteValue(this.Minor, ref dest, ref charsWritten))
+                return false;
+
+            if (!tryWriteChar('.', ref dest, ref charsWritten))
+                return false;
+
+            if (!tryWriteValue(this.Patch, ref dest, ref charsWritten))
+                return false;
+
+            if (this.Prerelease != null)
+            {
+                if (!tryWriteChar('-', ref dest, ref charsWritten))
+                    return false;
+
+                if (!this.Prerelease.AsSpan().TryCopyTo(dest))
+                    return false;
+
+                dest = dest[this.Prerelease.Length..];
+                charsWritten += this.Prerelease.Length;
+            }
+
+            if (includeBuild && this.Build != null)
+            {
+                if (!tryWriteChar('+', ref dest, ref charsWritten))
+                    return false;
+
+                if (!this.Build.AsSpan().TryCopyTo(dest))
+                    return false;
+
+                dest = dest[this.Build.Length..];
+                charsWritten += this.Build.Length;
+            }
+
+            return true;
+
+            static bool tryWriteValue<T>(T value, ref Span<char> dest, ref int written) where T : ISpanFormattable
+            {
+                bool res = value.TryFormat(dest, out int charsWritten, default, null);
+                dest = dest[charsWritten..];
+                written += charsWritten;
+                return res;
+            }
+
+            static bool tryWriteChar(char value, ref Span<char> dest, ref int written)
+            {
+                if (dest.IsEmpty)
+                    return false;
+
+                dest[0] = value;
+                dest = dest[1..];
+                written++;
+                return true;
+            }
+        }
+#endif
     }
 }
