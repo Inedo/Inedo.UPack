@@ -1,4 +1,7 @@
 ﻿using System.Diagnostics;
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Inedo.UPack.Net
 {
@@ -29,7 +32,7 @@ namespace Inedo.UPack.Net
                         return h.CreateClient();
                 }
 
-                var handler = new UsedHandler(new HttpClientHandler { UseDefaultCredentials = r.Endpoint.UseDefaultCredentials });
+                var handler = new UsedHandler(this.CreateHandler(r.Endpoint.UseDefaultCredentials));
                 this.current.Add(handler);
                 return handler.CreateClient();
             }
@@ -89,6 +92,18 @@ namespace Inedo.UPack.Net
         }
 
         private void Cleanup_Tick(object? _) => this.RunCleanup();
+        private HttpClientHandler CreateHandler(bool useDefaultCredentials)
+        {
+            var handler = new HttpClientHandler { UseDefaultCredentials = useDefaultCredentials };
+#if NET5_0_OR_GREATER
+            // wire up to ServicePointManager callback to facilitate migration to new library version
+            var certificateValidationCallback = ServicePointManager.ServerCertificateValidationCallback;
+            if (certificateValidationCallback != null)
+                handler.ServerCertificateCustomValidationCallback = (HttpRequestMessage message, X509Certificate2? cert, X509Chain? chain, SslPolicyErrors errors) => certificateValidationCallback(message, cert, chain, errors);
+#endif
+
+            return handler;
+        }
 
         private sealed class UsedHandler
         {
