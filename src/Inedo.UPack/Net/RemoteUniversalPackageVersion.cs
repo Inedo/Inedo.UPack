@@ -48,6 +48,20 @@ namespace Inedo.UPack.Net
             }
 
             this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object>());
+
+            if (obj.TryGetProperty("dependencies", out var depsProp) && depsProp.ValueKind == JsonValueKind.Array && depsProp.GetArrayLength() > 0)
+            {
+                var deps = new UniversalPackageDependency[depsProp.GetArrayLength()];
+                int i = 0;
+                foreach (var d in depsProp.EnumerateArray())
+                    deps[i++] = UniversalPackageDependency.Parse(d.GetString());
+
+                this.Dependencies = deps;
+            }
+            else
+            {
+                this.Dependencies = Array.Empty<UniversalPackageDependency>();
+            }
         }
         internal RemoteUniversalPackageVersion(JsonObject obj)
         {
@@ -75,6 +89,7 @@ namespace Inedo.UPack.Net
 
             this.Tags = ((JsonArray?)obj["tags"])?.Select(t => (string)t!)?.ToArray() ?? Array.Empty<string>();
             this.AllProperties = new ReadOnlyDictionary<string, object>((IDictionary<string, object>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object>());
+            this.Dependencies = ((JsonArray?)obj["dependencies"])?.Select(d => UniversalPackageDependency.Parse((string?)d))?.ToArray() ?? Array.Empty<UniversalPackageDependency>();
         }
 
         /// <summary>
@@ -129,6 +144,10 @@ namespace Inedo.UPack.Net
         /// Gets the package's tags.
         /// </summary>
         public IReadOnlyCollection<string> Tags { get; }
+        /// <summary>
+        /// Gets the package's dependencies.
+        /// </summary>
+        public IReadOnlyCollection<UniversalPackageDependency> Dependencies { get; }
 
         /// <summary>
         /// Returns the package ID and version.
