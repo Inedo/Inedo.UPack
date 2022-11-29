@@ -1,6 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Net
 {
@@ -358,6 +357,7 @@ namespace Inedo.UPack.Net
             var url = FormatUrl("versions", ("group", id?.Group), ("name", id?.Name), ("version", version?.ToString()), ("includeFileList", includeFileList), ("count", maxCount));
             var request = new ApiRequest(this.Endpoint, url);
             using var response = await this.transport.GetResponseAsync(request, cancellationToken).ConfigureAwait(false);
+            await response.ThrowIfNotSuccessfulAsync(cancellationToken).ConfigureAwait(false);
             if (response.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
                 throw new InvalidDataException($"Server returned {response.ContentType} content type; expected application/json.");
 
