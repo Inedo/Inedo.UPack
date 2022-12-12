@@ -175,6 +175,29 @@ namespace Inedo.UPack.Packaging
         /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
         public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string>? shouldInclude, CancellationToken cancellationToken) => AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileAsync, this.AddEmptyDirectory, cancellationToken);
+        /// <summary>
+        /// Adds the files and directories from the specified source path to the specified target path in the package.
+        /// </summary>
+        /// <param name="sourcePath">Full source path of files and directories to include. This must be an absolute path.</param>
+        /// <param name="targetPath">Target prefix path inside the package.</param>
+        /// <param name="recursive">When true, subdirectories will be recursively added to the package.</param>
+        /// <param name="compressionLevel">Compression level used to add files to the package.</param>
+        /// <param name="shouldInclude">Method invoked for each file to determine if it should be added to the package. The full source path is the argument supplied to the method.</param>
+        /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
+        public Task AddContentsAsync(string sourcePath, string targetPath, bool recursive, CompressionLevel compressionLevel, Predicate<string>? shouldInclude, CancellationToken cancellationToken = default)
+        {
+            return AddContentsInternalAsync(
+                sourcePath,
+                targetPath,
+                recursive,
+                shouldInclude,
+                (stream, path, timestamp, cancellationToken) => this.AddFileAsync(stream, path, timestamp, compressionLevel, cancellationToken),
+                this.AddEmptyDirectory,
+                cancellationToken
+            );
+        }
 
         /// <summary>
         /// Adds the files and directories from the specified source path to the specified raw target path in the package.
@@ -206,6 +229,29 @@ namespace Inedo.UPack.Packaging
         /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
         /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
         public Task AddRawContentsAsync(string sourcePath, string targetPath, bool recursive, Predicate<string>? shouldInclude, CancellationToken cancellationToken) => AddContentsInternalAsync(sourcePath, targetPath, recursive, shouldInclude, this.AddFileRawAsync, this.AddEmptyDirectoryRaw, cancellationToken);
+        /// <summary>
+        /// Adds the files and directories from the specified source path to the specified raw target path in the package.
+        /// </summary>
+        /// <param name="sourcePath">Full source path of files and directories to include. This must be an absolute path.</param>
+        /// <param name="targetPath">Target prefix path inside the package.</param>
+        /// <param name="recursive">When true, subdirectories will be recursively added to the package.</param>
+        /// <param name="compressionLevel">Compression level used to add files to the package.</param>
+        /// <param name="shouldInclude">Method invoked for each file to determine if it should be added to the package. The full source path is the argument supplied to the method.</param>
+        /// <param name="cancellationToken">Cancellation token for asynchronous operations.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="sourcePath"/> is null or empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="sourcePath"/> is not an absolute path.</exception>
+        public Task AddRawContentsAsync(string sourcePath, string targetPath, bool recursive, CompressionLevel compressionLevel, Predicate<string>? shouldInclude, CancellationToken cancellationToken = default)
+        {
+            return AddContentsInternalAsync(
+                sourcePath,
+                targetPath,
+                recursive,
+                shouldInclude,
+                (stream, path, timestamp, cancellationToken) => this.AddFileRawAsync(stream, path, timestamp, compressionLevel, cancellationToken),
+                this.AddEmptyDirectory,
+                cancellationToken
+            );
+        }
 
         private static Stream CreateFile(string fileName)
         {
