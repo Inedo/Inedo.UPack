@@ -8,6 +8,7 @@
     <Company>Inedo</Company>
     <Product>UPack</Product>
     <Description>Provides interfaces for working with Universal Packages (upack) and associated feeds.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Inedo/Inedo.UPack</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Inedo/Inedo.UPack.git</RepositoryUrl>
@@ -29,9 +30,7 @@
     <PackageReference Include="System.Text.Json" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="upack-icon.png">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
+    <None Include="..\..\README.md" Link="README.md" Pack="true" PackagePath="/" />
+    <None Include="upack-icon.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
