@@ -72,6 +72,21 @@ namespace Inedo.UPack.Net
             this.UserName = userName;
             this.Password = password ?? throw new ArgumentNullException(nameof(password));
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UniversalFeedEndpoint"/> class.
+        /// </summary>
+        /// <param name="uri">The API endpoint URL.</param>
+        /// <param name="apiKey">API Key to use for api key authentication.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="uri"/> is null or <paramref name="apiKey"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="uri"/> is not http or https.</exception>
+        public UniversalFeedEndpoint(Uri uri, string apiKey)
+            : this(uri, false)
+        {
+            if (string.IsNullOrEmpty(apiKey))
+                throw new ArgumentNullException(nameof(apiKey));
+
+            this.APIKey = apiKey;
+        }
 
         /// <summary>
         /// Gets the feed API URL.
@@ -89,6 +104,11 @@ namespace Inedo.UPack.Net
         /// Gets the password for basic authentication.
         /// </summary>
         public SecureString? Password { get; }
+
+        /// <summary>
+        /// Gets the API Key for api key authentication.
+        /// </summary>
+        public string? APIKey { get; }
 
         internal bool IsLocalDirectory => string.Equals(this.Uri.Scheme, "file", StringComparison.OrdinalIgnoreCase);
 

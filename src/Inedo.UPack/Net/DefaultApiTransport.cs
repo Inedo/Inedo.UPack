@@ -121,8 +121,15 @@ namespace Inedo.UPack.Net
             url += r.RelativeUrl;
 
             var message = new HttpRequestMessage(new HttpMethod(r.Method), url);
-            if (!string.IsNullOrEmpty(r.Endpoint.UserName) && r.Endpoint.Password != null)
+            //default to using API Key if it exists
+            if (!string.IsNullOrEmpty(r.Endpoint.APIKey))
+            {
+                message.Headers.Add("X-ApiKey", r.Endpoint.APIKey);
+            }
+            else if (!string.IsNullOrEmpty(r.Endpoint.UserName) && r.Endpoint.Password != null)
+            {
                 message.Headers.Authorization = new AuthenticationHeaderValue("Basic", GetBasicAuthToken(r.Endpoint.UserName!, r.Endpoint.Password));
+            }
 
             return message;
         }
