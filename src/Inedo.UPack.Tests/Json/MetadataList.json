@@ -1,0 +1,17 @@
+[
+  {
+    "name": "myname",
+    "group": "mygroup",
+    "version": "1.2.3-pre1",
+    "dependencies": [
+      "mygroup/package1",
+      "mygroup/package2:*",
+      "mygroup/package3:[1.0.0,2.0.0)"
+    ]
+  },
+  {
+    "name": "myname2",
+    "group": "mygroup2",
+    "_custom": true
+  }
+]
