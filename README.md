@@ -40,7 +40,7 @@ using (var package = new UniversalPackage("MyPackage.upack"))
 ```
 
 ### Read Package Metadata
-Access the properites on a `UniversalPackage` instance:
+Access the properties on a `UniversalPackage` instance:
 
 ```C#
 Console.WriteLine($"Package name: {package.Name}");
