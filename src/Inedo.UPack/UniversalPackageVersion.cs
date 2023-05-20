@@ -100,6 +100,27 @@ namespace Inedo.UPack
             var version = ParseInternal(s, out var error);
             return version ?? throw new ArgumentException(error);
         }
+        public void Deconstruct(out BigInteger major, out BigInteger minor, out BigInteger patch, out string? prerelease, out string? build)
+        {
+            major = this.Major;
+            minor = this.Minor;
+            patch = this.Patch;
+            prerelease = this.Prerelease;
+            build = this.Build;
+        }
+        public void Deconstruct(out BigInteger major, out BigInteger minor, out BigInteger patch, out string? prerelease)
+        {
+            major = this.Major;
+            minor = this.Minor;
+            patch = this.Patch;
+            prerelease = this.Prerelease;
+        }
+        public void Deconstruct(out BigInteger major, out BigInteger minor, out BigInteger patch)
+        {
+            major = this.Major;
+            minor = this.Minor;
+            patch = this.Patch;
+        }
         public static bool Equals(UniversalPackageVersion? a, UniversalPackageVersion? b)
         {
             if (ReferenceEquals(a, b))
