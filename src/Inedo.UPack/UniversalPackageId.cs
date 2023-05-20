@@ -74,6 +74,15 @@ namespace Inedo.UPack
 
             return new UniversalPackageId(null, s);
         }
+        public void Deconstruct(out string name)
+        {
+            name = this.Name;
+        }
+        public void Deconstruct(out string? group, out string name)
+        {
+            group = this.Group;
+            name = this.Name;
+        }
         /// <summary>
         /// Returns a value indicating whether the specified string is a valid upack group.
         /// </summary>
