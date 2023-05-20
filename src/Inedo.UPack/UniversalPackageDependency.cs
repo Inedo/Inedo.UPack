@@ -1,4 +1,6 @@
-﻿namespace Inedo.UPack
+﻿using System.Buffers.Binary;
+
+namespace Inedo.UPack
 {
     /// <summary>
     /// Represents a universal package dependency specification.
@@ -136,6 +138,19 @@
                 else
                     return new UniversalPackageDependency(parts[0], parts[1], UniversalPackageVersionRange.Parse(parts[2]));
             }
+        }
+
+        public void Deconstruct(out string? group, out string name, out UniversalPackageVersionRange versionRange)
+        {
+            group = this.Group;
+            name = this.Name;
+            versionRange = this.VersionRange;
+        }
+
+        public void Deconstruct(out string? group, out string name)
+        {
+            group = this.Group;
+            name = this.Name;
         }
 
         public override string ToString()
