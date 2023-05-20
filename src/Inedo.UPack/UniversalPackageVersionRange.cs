@@ -154,6 +154,14 @@ namespace Inedo.UPack
             return true;
         }
 
+        public void Deconstruct(out UniversalPackageVersion? lowerBound, out bool lowerExclusive, out UniversalPackageVersion? upperBound, out bool upperExclusive)
+        {
+            lowerBound = this.LowerBound;
+            lowerExclusive = this.LowerExclusive;
+            upperBound = this.UpperBound;
+            upperExclusive = this.UpperExclusive;
+        }
+
         /// <summary>
         /// Determines whether two <see cref="UniversalPackageVersionRange"/> instances are equivalent.
         /// </summary>
