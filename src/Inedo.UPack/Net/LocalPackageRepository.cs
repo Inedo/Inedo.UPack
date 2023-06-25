@@ -130,10 +130,18 @@ namespace Inedo.UPack.Net
                           select p).ToList();
 
             var latest = (JsonObject)JsonNode.Parse(sorted.First().JObject.ToJsonString())!;
-            latest["latestVersion"] = latest["version"];
+            var version = latest["version"];
             latest.Remove("version");
-            latest["versions"] = new JsonArray(sorted.Select(v => v.JObject["version"]).ToArray());
+            latest["latestVersion"] = version;
+            latest["versions"] = new JsonArray(sorted.Select(copyDeleteAndReturnVersionFrom).ToArray());
             return latest;
+
+            static JsonNode? copyDeleteAndReturnVersionFrom(PackageFile f)
+            {
+                var v = f.JObject["version"];
+                f.JObject.Remove("version");
+                return v;
+            }
         }
 
         private readonly struct PackageKey : IEquatable<PackageKey>
