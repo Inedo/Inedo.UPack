@@ -142,5 +142,55 @@ namespace Inedo.UPack
 
             return null;
         }
+
+        public static void WriteObject(Utf8JsonWriter writer, Dictionary<string, object?> properties)
+        {
+            writer.WriteStartObject();
+
+            foreach (var p in properties)
+            {
+                writer.WritePropertyName(p.Key);
+                writeValue(writer, p.Value);
+            }
+
+            writer.WriteEndObject();
+
+            static void writeValue(Utf8JsonWriter writer, object? value)
+            {
+                switch (value)
+                {
+                    case bool b:
+                        writer.WriteBooleanValue(b);
+                        break;
+
+                    case int i:
+                        writer.WriteNumberValue(i);
+                        break;
+
+                    case long l:
+                        writer.WriteNumberValue(l);
+                        break;
+
+                    case string s:
+                        writer.WriteStringValue(s);
+                        break;
+
+                    case object?[] a:
+                        writer.WriteStartArray();
+                        foreach (var v in a)
+                            writeValue(writer, v);
+                        writer.WriteEndArray();
+                        break;
+
+                    case Dictionary<string, object?> o:
+                        WriteObject(writer, o);
+                        break;
+
+                    case null:
+                        writer.WriteNullValue();
+                        break;
+                }
+            }
+        }
     }
 }

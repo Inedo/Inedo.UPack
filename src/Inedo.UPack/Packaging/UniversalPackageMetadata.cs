@@ -201,14 +201,7 @@ namespace Inedo.UPack.Packaging
         /// <returns>Key/value pair enumerator for all properties.</returns>
         public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => this.properties.GetEnumerator();
 
-        internal void WriteJson(Utf8JsonWriter writer)
-        {
-            JsonSerializer.Serialize(
-                writer,
-                this.properties,
-                typeof(Dictionary<string, object?>)
-            );
-        }
+        internal void WriteJson(Utf8JsonWriter writer) => AH.WriteObject(writer, this.properties);
 
         private void AddInternal(string key, object? value) => this.properties[key] = value;
         private object? GetInternal(string propertyName) => this.properties.TryGetValue(propertyName, out var value) ? value : null;

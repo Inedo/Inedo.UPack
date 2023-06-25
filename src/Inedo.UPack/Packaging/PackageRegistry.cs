@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Packaging
 {
@@ -352,12 +351,11 @@ namespace Inedo.UPack.Packaging
             var fileName = Path.Combine(registryRoot, "installedPackages.json");
 
             using var configStream = new FileStream(fileName, FileMode.Create, FileAccess.Write);
-            JsonSerializer.Serialize(
-                configStream,
-                packages.Select(p => p.GetInternalDictionary()).ToArray(),
-                typeof(Dictionary<string, object?>[]),
-                new JsonSerializerOptions { WriteIndented = true }
-            );
+            using var writer = new Utf8JsonWriter(configStream, new JsonWriterOptions { Indented = true });
+            writer.WriteStartArray();
+            foreach (var p in packages)
+                AH.WriteObject(writer, p.GetInternalDictionary());
+            writer.WriteEndArray();
         }
         private static bool PackageNameAndGroupEquals(RegisteredPackage? p1, RegisteredPackage? p2)
         {
