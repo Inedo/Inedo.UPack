@@ -36,7 +36,7 @@ namespace Inedo.UPack.Net
             var versions = new UniversalPackageVersion[versionProp.GetArrayLength()];
             int i = 0;
             foreach (var v in versionProp.EnumerateArray())
-                versions[i++] = UniversalPackageVersion.Parse(v.GetString());
+                versions[i++] = UniversalPackageVersion.Parse(v.GetString()!);
 
             this.AllVersions = versions;
             this.AllProperties = new ReadOnlyDictionary<string, object?>((IDictionary<string, object?>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object?>());
@@ -61,7 +61,7 @@ namespace Inedo.UPack.Net
             this.Description = (string?)obj["description"];
             this.Downloads = int.TryParse(obj["downloads"]?.ToString(), out int d) ? d : 0;
 
-            this.AllVersions = Array.AsReadOnly(((JsonArray?)obj["versions"])!.Select(t => UniversalPackageVersion.Parse((string?)t)).ToArray());
+            this.AllVersions = Array.AsReadOnly(((JsonArray?)obj["versions"])!.Select(t => UniversalPackageVersion.Parse((string)t!)).ToArray());
             this.AllProperties = new ReadOnlyDictionary<string, object?>((IDictionary<string, object?>?)AH.CanonicalizeJsonToken(obj) ?? new Dictionary<string, object?>());
         }
 

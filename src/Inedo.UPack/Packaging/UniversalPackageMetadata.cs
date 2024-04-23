@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace Inedo.UPack.Packaging
 {
@@ -62,7 +61,7 @@ namespace Inedo.UPack.Packaging
         /// </summary>
         public UniversalPackageVersion? Version
         {
-            get => UniversalPackageVersion.Parse((string?)this.GetPropertyValue("version"));
+            get => UniversalPackageVersion.TryParse((string?)this.GetPropertyValue("version"), out var value) ? value : null;
             set => this.SetPropertyValue(value?.ToString(), "version");
         }
         /// <summary>

@@ -10,7 +10,7 @@ namespace Inedo.UPack.Json
             Type typeToConvert,
             JsonSerializerOptions options)
         {
-            return UniversalPackageVersion.Parse(reader.GetString());
+            return UniversalPackageVersion.Parse(reader.GetString()!);
         }
 
         public override void Write(

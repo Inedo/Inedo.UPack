@@ -61,9 +61,9 @@ namespace Inedo.UPack.Net
             var packageVersions = this.allPackages.Value[new PackageKey(id.Group, id.Name)];
             var match = default(PackageFile);
             if (version == null)
-                match = packageVersions.OrderByDescending(p => UniversalPackageVersion.Parse((string?)p.JObject["version"])).FirstOrDefault();
+                match = packageVersions.OrderByDescending(p => UniversalPackageVersion.Parse((string)p.JObject["version"]!)).FirstOrDefault();
             else
-                match = packageVersions.FirstOrDefault(p => UniversalPackageVersion.Parse((string?)p.JObject["version"]) == version);
+                match = packageVersions.FirstOrDefault(p => UniversalPackageVersion.Parse((string)p.JObject["version"]!) == version);
 
             if (match.IsNull)
                 return null;
@@ -125,7 +125,7 @@ namespace Inedo.UPack.Net
         private static JsonObject GetMungedPackage(IEnumerable<PackageFile> packageVersions)
         {
             var sorted = (from p in packageVersions
-                          let v = UniversalPackageVersion.Parse((string?)p.JObject["version"])
+                          let v = UniversalPackageVersion.Parse((string)p.JObject["version"]!)
                           orderby v descending
                           select p).ToList();
 

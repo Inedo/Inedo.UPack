@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -8,16 +9,23 @@ namespace Inedo.UPack
     /// Represents a version used by universal packages. This version is compatible with semantic versioning 2.0.
     /// </summary>
     [Serializable]
-    public sealed class UniversalPackageVersion : IEquatable<UniversalPackageVersion>, IComparable<UniversalPackageVersion>, IComparable, IFormattable
+    public sealed partial class UniversalPackageVersion : IEquatable<UniversalPackageVersion>, IComparable<UniversalPackageVersion>, IComparable, IFormattable
 #if NET6_0_OR_GREATER
 , ISpanFormattable
 #endif
+#if NET7_0_OR_GREATER
+, IEqualityOperators<UniversalPackageVersion, UniversalPackageVersion, bool>
+, IComparisonOperators<UniversalPackageVersion, UniversalPackageVersion, bool>
+, IParsable<UniversalPackageVersion>
+, ISpanParsable<UniversalPackageVersion>
+#endif
     {
+#if NETSTANDARD2_0
         private static readonly char[] Dot = new[] { '.' };
-        private static readonly Regex SemanticVersionRegex = new(
-            @"^(?<1>[0-9]+)\.(?<2>[0-9]+)\.(?<3>[0-9]+)(-(?<4>[0-9a-zA-Z\.-]+))?(\+(?<5>[0-9a-zA-Z\.-]+))?$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture
-        );
+#else
+        private const char Dot = '.';
+#endif
+        private static readonly Regex SemanticVersionRegex = GetSemanticVersionRegex();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackageVersion"/> class.
@@ -85,6 +93,22 @@ namespace Inedo.UPack
         /// </summary>
         public string? Build { get; }
 
+#if NET7_0_OR_GREATER
+        static UniversalPackageVersion IParsable<UniversalPackageVersion>.Parse(string s, IFormatProvider? provider) => Parse(s);
+        static bool IParsable<UniversalPackageVersion>.TryParse(string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out UniversalPackageVersion result) => TryParse(s, out result);
+        static bool ISpanParsable<UniversalPackageVersion>.TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, [MaybeNullWhen(false)] out UniversalPackageVersion result) => TryParse(s, out result);
+        static UniversalPackageVersion ISpanParsable<UniversalPackageVersion>.Parse(ReadOnlySpan<char> s, IFormatProvider? provider) => Parse(s);
+#endif
+
+        public static bool TryParse(string? s,
+#if NET6_0_OR_GREATER
+            [MaybeNullWhen(false)]
+#endif
+        out UniversalPackageVersion value)
+        {
+            value = ParseInternal(s, out _)!;
+            return value != null;
+        }
         public static UniversalPackageVersion? TryParse(string? s)
         {
             if (string.IsNullOrEmpty(s))
@@ -92,7 +116,7 @@ namespace Inedo.UPack
 
             return ParseInternal(s, out _);
         }
-        public static UniversalPackageVersion Parse(string? s)
+        public static UniversalPackageVersion Parse(string s)
         {
             if (string.IsNullOrEmpty(s))
                 throw new ArgumentNullException(nameof(s));
@@ -168,7 +192,7 @@ namespace Inedo.UPack
 
         public bool Equals(UniversalPackageVersion? other) => Equals(this, other);
         public override bool Equals(object? obj) => this.Equals(obj as UniversalPackageVersion);
-        public override int GetHashCode() => ((int)this.Major << 20) | ((int)this.Minor << 10) | (int)this.Patch;
+        public override int GetHashCode() => (int)this.Major << 20 | (int)this.Minor << 10 | (int)this.Patch;
         public override string ToString() => this.ToString(null);
         /// <summary>
         /// Returns a string representation of this version.
@@ -220,6 +244,68 @@ namespace Inedo.UPack
         }
         public int CompareTo(UniversalPackageVersion? other) => Compare(this, other);
         int IComparable.CompareTo(object? obj) => this.CompareTo(obj as UniversalPackageVersion);
+
+#if NET6_0_OR_GREATER
+        public static UniversalPackageVersion Parse(ReadOnlySpan<char> s)
+        {
+            if (!TryParse(s, out var value))
+                throw new FormatException("String is not a valid semantic version.");
+
+            return value;
+        }
+        public static bool TryParse(ReadOnlySpan<char> s, [MaybeNullWhen(false)] out UniversalPackageVersion value)
+        {
+            value = null;
+            int delimiterIndex = s.IndexOf('.');
+            if (delimiterIndex <= 0 || !BigInteger.TryParse(s[..delimiterIndex], out var major))
+                return false;
+
+            s = s[(delimiterIndex + 1)..];
+            delimiterIndex = s.IndexOf('.');
+            if (delimiterIndex <= 0 || !BigInteger.TryParse(s[..delimiterIndex], out var minor))
+                return false;
+
+            BigInteger patch;
+
+            s = s[(delimiterIndex + 1)..];
+            delimiterIndex = s.IndexOfAny('-', '+');
+            if (delimiterIndex < 0)
+            {
+                if (!BigInteger.TryParse(s, out patch))
+                    return false;
+
+                value = new UniversalPackageVersion(major, minor, patch);
+                return true;
+            }
+
+            if (!BigInteger.TryParse(s, out patch))
+                return false;
+
+            string? prerelease = null;
+            string? build = null;
+
+            if (s[delimiterIndex] == '-')
+            {
+                s = s[(delimiterIndex + 1)..];
+
+                delimiterIndex = s.IndexOf('+');
+                prerelease = delimiterIndex >= 0 ? s[..delimiterIndex].ToString() : s.ToString();
+                if (delimiterIndex >= 0)
+                {
+                    s = s[(delimiterIndex + 1)..];
+                    build = s.ToString();
+                }
+            }
+            else
+            {
+                s = s[(delimiterIndex + 1)..];
+                build = s.ToString();
+            }
+
+            value = new UniversalPackageVersion(major, minor, patch, prerelease, build);
+            return true;
+        }
+#endif
 
         private static UniversalPackageVersion? ParseInternal(string? s, out string? error)
         {
@@ -395,6 +481,13 @@ namespace Inedo.UPack
                 return true;
             }
         }
+#endif
+
+#if NET7_0_OR_GREATER
+        [GeneratedRegex(@"^(?<1>[0-9]+)\.(?<2>[0-9]+)\.(?<3>[0-9]+)(-(?<4>[0-9a-zA-Z\.-]+))?(\+(?<5>[0-9a-zA-Z\.-]+))?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled)]
+        private static partial Regex GetSemanticVersionRegex();
+#else
+        private static Regex GetSemanticVersionRegex() => new(@"^(?<1>[0-9]+)\.(?<2>[0-9]+)\.(?<3>[0-9]+)(-(?<4>[0-9a-zA-Z\.-]+))?(\+(?<5>[0-9a-zA-Z\.-]+))?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 #endif
     }
 }

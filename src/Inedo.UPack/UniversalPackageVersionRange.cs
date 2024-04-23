@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Numerics;
+using System.Text;
 
 namespace Inedo.UPack
 {
@@ -6,6 +7,12 @@ namespace Inedo.UPack
     /// Represents a range of Universal Package versions.
     /// </summary>
     public readonly struct UniversalPackageVersionRange : IEquatable<UniversalPackageVersionRange>
+#if NET6_0_OR_GREATER
+, ISpanFormattable
+#endif
+#if NET7_0_OR_GREATER
+, IEqualityOperators<UniversalPackageVersionRange, UniversalPackageVersionRange, bool>
+#endif
     {
         /// <summary>
         /// Represents an unbound range which matches any version (equivalent to *).
@@ -216,5 +223,56 @@ namespace Inedo.UPack
         }
         public override bool Equals(object? obj) => obj is UniversalPackageVersionRange v && this.Equals(v);
         public override int GetHashCode() => this.LowerBound?.GetHashCode() ?? 0;
+
+#if NET6_0_OR_GREATER
+        public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            charsWritten = 0;
+            if (destination.IsEmpty)
+                return false;
+
+            if (this.LowerBound is null && this.UpperBound is null)
+            {
+                destination[0] = '*';
+                charsWritten = 1;
+                return true;
+            }
+
+            if (this.LowerBound == this.UpperBound)
+                return this.LowerBound!.TryFormat(destination, out charsWritten, format, provider);
+
+            destination[0] = this.LowerExclusive ? '(' : '[';
+            charsWritten++;
+            if (this.LowerBound is not null)
+            {
+                if (!this.LowerBound.TryFormat(destination[1..], out int w))
+                    return false;
+
+                charsWritten += w;
+                destination = destination[(w + 1)..];
+            }
+
+            if (destination.IsEmpty)
+                return false;
+
+            destination[0] = ',';
+            if (this.UpperBound is not null)
+            {
+                if (!this.UpperBound.TryFormat(destination[1..], out int w))
+                    return false;
+
+                charsWritten += w;
+                destination = destination[(w + 1)..];
+            }
+
+            if (destination.IsEmpty)
+                return false;
+
+            destination[0] = this.UpperExclusive ? ')' : ']';
+            charsWritten++;
+            return true;
+        }
+        string IFormattable.ToString(string? format, IFormatProvider? formatProvider) => this.ToString();
+#endif
     }
 }

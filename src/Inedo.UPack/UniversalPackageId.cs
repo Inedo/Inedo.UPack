@@ -6,10 +6,10 @@ namespace Inedo.UPack
     /// Uniquely identifies a universal package using a name and a group.
     /// </summary>
     [Serializable]
-    public sealed class UniversalPackageId : IEquatable<UniversalPackageId>, IComparable<UniversalPackageId>, IComparable
+    public sealed partial class UniversalPackageId : IEquatable<UniversalPackageId>, IComparable<UniversalPackageId>, IComparable
     {
-        private static readonly Regex GroupRegex = new(@"^[0-9A-Za-z\-\./_]+$", RegexOptions.Compiled);
-        private static readonly Regex NameRegex = new(@"^[0-9A-Za-z\-\._]+$", RegexOptions.Compiled);
+        private static readonly Regex GroupRegex = GetGroupRegex();
+        private static readonly Regex NameRegex = GetNameRegex();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UniversalPackageId"/> class.
@@ -143,7 +143,7 @@ namespace Inedo.UPack
         public int CompareTo(UniversalPackageId? other) => Compare(this, other);
         public override bool Equals(object? obj) => this.Equals(obj as UniversalPackageId);
         public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(this.Group ?? string.Empty) ^ StringComparer.OrdinalIgnoreCase.GetHashCode(this.Name);
-        public override string ToString() => this.Group == null ? this.Name : (this.Group + "/" + this.Name);
+        public override string ToString() => this.Group == null ? this.Name : $"{this.Group}/{this.Name}";
 
         int IComparable.CompareTo(object? obj)
         {
@@ -152,5 +152,15 @@ namespace Inedo.UPack
 
             return this.CompareTo(id);
         }
+
+#if NET7_0_OR_GREATER
+        [GeneratedRegex("^[0-9A-Za-z\\-\\./_]+$", RegexOptions.Compiled)]
+        private static partial Regex GetGroupRegex();
+        [GeneratedRegex("^[0-9A-Za-z\\-\\._]+$", RegexOptions.Compiled)]
+        private static partial Regex GetNameRegex();
+#else
+        private static Regex GetGroupRegex() => new("^[0-9A-Za-z\\-\\./_]+$", RegexOptions.Compiled);
+        private static Regex GetNameRegex() => new("^[0-9A-Za-z\\-\\._]+$", RegexOptions.Compiled);
+#endif
     }
 }
