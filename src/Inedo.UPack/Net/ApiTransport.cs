@@ -13,6 +13,19 @@
         }
 
         /// <summary>
+        /// Gets or sets the timeout period for requests.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To disable timeouts, set this value to <see cref="Timeout.InfiniteTimeSpan"/>.
+        /// </para>
+        /// <para>
+        /// Setting this value to <c>null</c> means that the default timeout period is used.
+        /// </para>
+        /// </remarks>
+        public TimeSpan? Timeout { get; set; }
+
+        /// <summary>
         /// When implemented in a derived class, makes the API request specified.
         /// </summary>
         /// <param name="request">The API request.</param>

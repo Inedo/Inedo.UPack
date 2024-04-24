@@ -46,6 +46,22 @@ namespace Inedo.UPack.Net
         /// Gets the endpoint connection information.
         /// </summary>
         public UniversalFeedEndpoint Endpoint { get; }
+        /// <summary>
+        /// Gets or sets the timeout period for requests.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To disable timeouts, set this value to <see cref="Timeout.InfiniteTimeSpan"/>.
+        /// </para>
+        /// <para>
+        /// Setting this value to <c>null</c> means that the default timeout period is used.
+        /// </para>
+        /// </remarks>
+        public TimeSpan? Timeout
+        {
+            get => this.transport.Timeout;
+            set => this.transport.Timeout = value;
+        }
 
         /// <summary>
         /// Returns a list of packages with the specified group.

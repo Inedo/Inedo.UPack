@@ -134,6 +134,14 @@ namespace Inedo.UPack.Net
             return message;
         }
 
-        protected HttpClient GetHttpClient(ApiRequest r) => this.HttpClientFactory?.Invoke(r) ?? InternalHttpClientFactory.Instance.GetClient(r);
+        protected HttpClient GetHttpClient(ApiRequest r)
+        {
+            var client = this.HttpClientFactory?.Invoke(r) ?? InternalHttpClientFactory.Instance.GetClient(r);
+
+            if (this.Timeout.HasValue)
+                client.Timeout = this.Timeout.GetValueOrDefault();
+
+            return client;
+        }
     }
 }
