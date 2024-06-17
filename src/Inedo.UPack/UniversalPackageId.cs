@@ -90,7 +90,10 @@ namespace Inedo.UPack
         /// <returns>True if string can be used as a group; otherwise false.</returns>
         public static bool IsValidGroup(string? s)
         {
-            if (string.IsNullOrEmpty(s))
+            // technically * is not a valid group, but a search term used for the API
+            // - it's best to fix this via updating the API/functions that call this, with some kind of search strategy
+            // - however, the library is deprecated in favor of Inedo.ProGet, so this hack is fine for now
+            if (string.IsNullOrEmpty(s) || s == "*")
                 return true;
 
             if (!GroupRegex.IsMatch(s) || s!.Contains("//"))
