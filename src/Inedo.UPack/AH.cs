@@ -159,8 +159,11 @@ namespace Inedo.UPack
             {
                 switch (value)
                 {
+                    case JsonNode nd:
+                        nd.WriteTo(writer);
+                        break;
                     case JsonElement el:
-                        writer.WriteRawValue(el.GetRawText());
+                        el.WriteTo(writer);
                         break;
                     case bool b:
                         writer.WriteBooleanValue(b);
